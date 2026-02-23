@@ -278,12 +278,84 @@
         #editStudentsModal textarea:focus { border-color: #667eea; }
         .edit-note { font-size: 0.78rem; color: #718096; margin-bottom: 0.6rem; }
         .modal-footer { display: flex; gap: 0.6rem; margin-top: 1rem; justify-content: flex-end; }
+
+        /* Values edit modal */
+        #editValuesModal .modal { max-width: 680px; }
+        .value-edit-list { display: flex; flex-direction: column; gap: 0.6rem; max-height: 55vh; overflow-y: auto; padding-left: 2px; }
+        .value-edit-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr auto;
+            gap: 0.5rem;
+            align-items: start;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 0.6rem;
+        }
+        .value-edit-row input[type="text"] {
+            width: 100%;
+            padding: 0.45rem 0.65rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 7px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            outline: none;
+            direction: rtl;
+            transition: border-color 0.2s;
+        }
+        .value-edit-row input[type="text"]:focus { border-color: #667eea; }
+        .value-edit-row textarea {
+            width: 100%;
+            padding: 0.45rem 0.65rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 7px;
+            font-size: 0.82rem;
+            font-family: inherit;
+            resize: vertical;
+            outline: none;
+            direction: rtl;
+            line-height: 1.5;
+            min-height: 58px;
+            transition: border-color 0.2s;
+        }
+        .value-edit-row textarea:focus { border-color: #667eea; }
+        .btn-delete-row {
+            background: none;
+            border: none;
+            color: #cbd5e0;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.2rem 0.4rem;
+            border-radius: 6px;
+            line-height: 1;
+            transition: color 0.15s, background 0.15s;
+            margin-top: 2px;
+        }
+        .btn-delete-row:hover { color: #e53e3e; background: #fff5f5; }
+        .add-value-btn {
+            width: 100%;
+            margin-top: 0.6rem;
+            padding: 0.55rem;
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            background: none;
+            color: #718096;
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: border-color 0.2s, color 0.2s, background 0.2s;
+        }
+        .add-value-btn:hover { border-color: #667eea; color: #667eea; background: #ebf4ff; }
     </style>
 </head>
 <body>
 
 <header>
-    <button class="header-btn" onclick="openEditStudents()">✏️ עריכת משתתפים</button>
+    <div style="display:flex;gap:0.5rem">
+        <button class="header-btn" onclick="openEditStudents()">👥 עריכת משתתפים</button>
+        <button class="header-btn" onclick="openEditValues()">📋 עריכת ערכים</button>
+    </div>
     <div class="header-center">
         <h1>🏛️ מכירה פומבית של ערכים</h1>
         <p>כל תלמיד מתחיל עם 1,000 ₪ וירטואליים — מי שמציע הכי הרבה זוכה!</p>
@@ -367,6 +439,20 @@
         <div class="modal-footer">
             <button class="btn btn-gray" onclick="closeEditStudents()">ביטול</button>
             <button class="btn btn-primary" onclick="applyStudents()">✔ עדכן רשימה</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ Edit Values Modal ══ -->
+<div class="modal-overlay" id="editValuesModal">
+    <div class="modal">
+        <h2>📋 עריכת רשימת הערכים</h2>
+        <p class="edit-note">ניתן לערוך שמות ותיאורים, למחוק ערכים ולהוסיף חדשים. שם הוא שדה חובה.</p>
+        <div class="value-edit-list" id="valueEditList"></div>
+        <button class="add-value-btn" onclick="addValueRow()">+ הוסף ערך חדש</button>
+        <div class="modal-footer">
+            <button class="btn btn-gray" onclick="closeEditValues()">ביטול</button>
+            <button class="btn btn-primary" onclick="applyValues()">✔ עדכן ערכים</button>
         </div>
     </div>
 </div>
@@ -658,6 +744,97 @@ function applyStudents() {
     students = names.map(name => ({ name, budget: 1000, bought: [] }));
     closeEditStudents();
     addLog(`✏️ רשימת המשתתפים עודכנה — ${names.length} תלמידים.`, 'info');
+    renderAll();
+}
+
+// ══════════════════════════════════════
+//  EDIT VALUES
+// ══════════════════════════════════════
+function openEditValues() {
+    const list = document.getElementById('valueEditList');
+    list.innerHTML = '';
+    values.forEach((v, i) => addValueRow(v.name, v.desc, v.status));
+    document.getElementById('editValuesModal').classList.add('open');
+}
+
+function closeEditValues() {
+    document.getElementById('editValuesModal').classList.remove('open');
+}
+
+function addValueRow(name = '', desc = '', status = 'pending') {
+    const list = document.getElementById('valueEditList');
+    const row  = document.createElement('div');
+    row.className = 'value-edit-row';
+
+    const isSoldOrActive = status === 'sold' || status === 'active';
+    const lockNote = isSoldOrActive
+        ? `<small style="color:#e53e3e;font-size:0.7rem">${status === 'sold' ? 'נמכר' : 'פעיל'}</small>`
+        : '';
+
+    row.innerHTML = `
+        <div>
+            <input type="text" placeholder="שם הערך *" value="${name.replace(/"/g,'&quot;')}"
+                ${isSoldOrActive ? 'readonly style="opacity:0.6"' : ''}>
+            ${lockNote}
+        </div>
+        <textarea placeholder="תיאור (אופציונלי)"
+            ${isSoldOrActive ? 'readonly style="opacity:0.6"' : ''}>${desc}</textarea>
+        <button class="btn-delete-row" title="מחק ערך"
+            onclick="removeValueRow(this)"
+            ${isSoldOrActive ? 'disabled style="opacity:0.3;cursor:not-allowed"' : ''}>✕</button>`;
+    list.appendChild(row);
+}
+
+function removeValueRow(btn) {
+    btn.closest('.value-edit-row').remove();
+}
+
+function applyValues() {
+    const rows = document.querySelectorAll('.value-edit-row');
+    const newValues = [];
+
+    for (const row of rows) {
+        const nameInput = row.querySelector('input[type="text"]');
+        const descInput = row.querySelector('textarea');
+        const name = nameInput.value.trim();
+        const desc = descInput.value.trim();
+
+        if (!name) {
+            nameInput.style.borderColor = '#e53e3e';
+            nameInput.focus();
+            return;
+        }
+        nameInput.style.borderColor = '';
+        newValues.push({ name, desc });
+    }
+
+    if (newValues.length === 0) { alert('יש להכניס לפחות ערך אחד.'); return; }
+
+    // Preserve status/bidCount/winner/finalPrice for existing values by name
+    const statusMap = {};
+    values.forEach(v => { statusMap[v.name] = v; });
+
+    let nextId = 0;
+    values = newValues.map(nv => {
+        const existing = statusMap[nv.name];
+        return {
+            id:         nextId++,
+            name:       nv.name,
+            desc:       nv.desc,
+            status:     existing ? existing.status     : 'pending',
+            winner:     existing ? existing.winner     : null,
+            finalPrice: existing ? existing.finalPrice : null,
+            bidCount:   existing ? existing.bidCount   : 0
+        };
+    });
+
+    // If active auction's value was removed, cancel it
+    if (auction && !values.find(v => v.id === auction.valueId)) {
+        auction = null;
+    }
+
+    closeEditValues();
+    addLog(`📋 רשימת הערכים עודכנה — ${values.length} ערכים.`, 'info');
     renderAll();
 }
 
