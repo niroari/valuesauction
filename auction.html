@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מכירה פומבית של ערכים</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f0f4f8;
+            color: #2d3748;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.8rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .header-center h1 { font-size: 1.8rem; }
+        .header-center p  { opacity: 0.85; font-size: 0.95rem; margin-top: 0.2rem; text-align: center; }
+        .header-btn {
+            background: rgba(255,255,255,0.2);
+            border: 2px solid rgba(255,255,255,0.5);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .header-btn:hover { background: rgba(255,255,255,0.35); }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 260px 1fr 280px;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* ── Shared panel ── */
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 0.9rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .panel-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 0.65rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        /* ── Students ── */
+        .students-panel {
+            max-height: calc(100vh - 110px);
+            overflow-y: auto;
+        }
+        .student-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.45rem 0.65rem;
+            margin-bottom: 0.35rem;
+            border-radius: 8px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            transition: background 0.2s, border-color 0.2s;
+            font-size: 0.82rem;
+        }
+        .student-item.leading {
+            background: #ebf8ff;
+            border-color: #63b3ed;
+        }
+        .student-budget { font-weight: 700; color: #38a169; }
+        .student-budget.low { color: #e53e3e; }
+
+        /* ── Center column ── */
+        .auction-area { display: flex; flex-direction: column; gap: 0.75rem; }
+
+        /* Active auction card */
+        .auction-card {
+            border: 2px solid #e2e8f0;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        .auction-card.live {
+            border-color: #667eea;
+            box-shadow: 0 0 18px rgba(102,126,234,0.25);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.2rem 0.7rem;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            margin-bottom: 0.6rem;
+        }
+        .badge-wait { background: #edf2f7; color: #718096; }
+        .badge-live { background: #fff5f5; color: #e53e3e; animation: blink 1.4s infinite; }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+        .value-name { font-size: 1.4rem; font-weight: 700; margin-bottom: 0.4rem; }
+        .value-desc { font-size: 0.88rem; color: #718096; line-height: 1.55; margin-bottom: 1rem; }
+
+        .bid-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.6rem;
+            margin-bottom: 1rem;
+        }
+        .stat-box {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 0.65rem;
+            text-align: center;
+        }
+        .stat-label { font-size: 0.72rem; color: #718096; margin-bottom: 0.2rem; }
+        .stat-value { font-size: 1.5rem; font-weight: 700; }
+        .stat-value.accent { color: #667eea; }
+
+        .bid-controls {
+            display: flex;
+            gap: 0.6rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        .form-group { display: flex; flex-direction: column; gap: 0.25rem; }
+        .form-group label { font-size: 0.78rem; font-weight: 600; color: #4a5568; }
+
+        select, input[type="number"] {
+            padding: 0.55rem 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-family: inherit;
+            outline: none;
+            direction: rtl;
+            transition: border-color 0.2s;
+        }
+        select:focus, input[type="number"]:focus { border-color: #667eea; }
+
+        .btn {
+            padding: 0.55rem 1.1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+        }
+        .btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .btn:active:not(:disabled) { transform: translateY(0); }
+        .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+        .btn-primary  { background: #667eea; color: white; }
+        .btn-success  { background: #38a169; color: white; }
+        .btn-danger   { background: #e53e3e; color: white; }
+        .btn-gray     { background: #718096; color: white; }
+        .btn-sm       { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+
+        .teacher-controls { display: flex; gap: 0.5rem; margin-top: 0.9rem; flex-wrap: wrap; align-items: center; }
+        .error-msg { color: #e53e3e; font-size: 0.78rem; margin-top: 0.3rem; min-height: 1.1rem; }
+
+        /* Values list */
+        .value-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 0.75rem;
+            margin-bottom: 0.4rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            gap: 0.5rem;
+        }
+        .value-row:hover:not(.vr-sold):not(.vr-active) { border-color: #667eea; background: #ebf4ff; cursor: pointer; }
+        .value-row.vr-active { background: #ebf4ff; border-color: #667eea; }
+        .value-row.vr-sold   { background: #f0fff4; border-color: #9ae6b4; opacity: 0.75; }
+        .vr-name  { font-size: 0.88rem; font-weight: 600; flex: 1; }
+        .vr-right { display: flex; align-items: center; gap: 0.6rem; white-space: nowrap; }
+        .sold-tag { font-size: 0.73rem; background: #38a169; color: white; padding: 0.18rem 0.5rem; border-radius: 12px; }
+
+        /* Log */
+        .log-panel { max-height: calc(100vh - 110px); overflow-y: auto; }
+        .log-entry {
+            padding: 0.45rem 0.6rem;
+            margin-bottom: 0.35rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            border-right: 3px solid transparent;
+        }
+        .log-entry.bid  { background: #ebf4ff; border-right-color: #667eea; }
+        .log-entry.sold { background: #f0fff4; border-right-color: #38a169; font-weight: 600; }
+        .log-entry.info { background: #fefcbf; border-right-color: #d69e2e; }
+        .log-time { font-size: 0.7rem; color: #a0aec0; margin-bottom: 0.1rem; }
+
+        /* ── Modals ── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.55); z-index: 200;
+            align-items: center; justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: white; border-radius: 16px; padding: 1.8rem;
+            width: 92%; max-height: 88vh; overflow-y: auto;
+        }
+        .modal h2 { font-size: 1.3rem; margin-bottom: 1.1rem; color: #667eea; }
+
+        /* Summary modal */
+        #summaryModal .modal { max-width: 820px; }
+        .summary-section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #4a5568;
+            margin: 1.2rem 0 0.6rem;
+            padding-bottom: 0.3rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.65rem; }
+        .summary-card { background: #f8fafc; border-radius: 8px; padding: 0.8rem; }
+        .summary-card h3 { font-size: 0.85rem; color: #4a5568; margin-bottom: 0.4rem; display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
+        .summary-card h3 .budget { color: #38a169; font-size: 0.8rem; white-space: nowrap; }
+        .bought-item { font-size: 0.8rem; padding: 0.2rem 0; border-bottom: 1px solid #e2e8f0; }
+        .no-buy { color: #a0aec0; font-style: italic; font-size: 0.8rem; }
+
+        /* Items summary table */
+        .items-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .items-table th {
+            background: #edf2f7; padding: 0.5rem 0.75rem;
+            text-align: right; font-weight: 700; color: #4a5568;
+        }
+        .items-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #e2e8f0; }
+        .items-table tr:hover td { background: #f8fafc; }
+        .items-table .winner-cell { color: #38a169; font-weight: 600; }
+        .items-table .pending-cell { color: #a0aec0; font-style: italic; }
+        .bid-count-badge {
+            display: inline-block;
+            background: #ebf4ff;
+            color: #667eea;
+            border-radius: 12px;
+            padding: 0.1rem 0.5rem;
+            font-weight: 700;
+            font-size: 0.78rem;
+        }
+
+        /* Students edit modal */
+        #editStudentsModal .modal { max-width: 500px; }
+        #editStudentsModal textarea {
+            width: 100%;
+            height: 300px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-size: 0.88rem;
+            font-family: inherit;
+            resize: vertical;
+            outline: none;
+            direction: rtl;
+            line-height: 1.7;
+        }
+        #editStudentsModal textarea:focus { border-color: #667eea; }
+        .edit-note { font-size: 0.78rem; color: #718096; margin-bottom: 0.6rem; }
+        .modal-footer { display: flex; gap: 0.6rem; margin-top: 1rem; justify-content: flex-end; }
+    </style>
+</head>
+<body>
+
+<header>
+    <button class="header-btn" onclick="openEditStudents()">✏️ עריכת משתתפים</button>
+    <div class="header-center">
+        <h1>🏛️ מכירה פומבית של ערכים</h1>
+        <p>כל תלמיד מתחיל עם 1,000 ₪ וירטואליים — מי שמציע הכי הרבה זוכה!</p>
+    </div>
+    <button class="header-btn" onclick="showSummary()">📊 סיכום</button>
+</header>
+
+<div class="main-grid">
+
+    <!-- ══ Students ══ -->
+    <div class="panel students-panel">
+        <div class="panel-title">👥 תלמידים</div>
+        <div id="studentsList"></div>
+    </div>
+
+    <!-- ══ Center ══ -->
+    <div class="auction-area">
+
+        <!-- Active auction card -->
+        <div class="panel auction-card" id="auctionCard">
+            <span class="status-badge badge-wait" id="statusBadge">⏳ ממתין למכירה</span>
+            <div class="value-name" id="aValueName">בחר ערך לפתיחת מכירה</div>
+            <div class="value-desc" id="aValueDesc">לחץ על "פתח מכירה" ליד אחד הערכים למטה כדי להתחיל.</div>
+
+            <div class="bid-stats">
+                <div class="stat-box">
+                    <div class="stat-label">הצעה גבוהה</div>
+                    <div class="stat-value accent" id="sCurBid">—</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">מציע</div>
+                    <div class="stat-value" id="sCurBidder" style="font-size:1rem">—</div>
+                </div>
+            </div>
+
+            <div class="bid-controls">
+                <div class="form-group">
+                    <label>תלמיד מציע</label>
+                    <select id="bidderSelect" disabled>
+                        <option value="">— בחר תלמיד —</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>סכום ₪</label>
+                    <input type="number" id="bidAmount" placeholder="0" min="1" disabled style="width:110px">
+                </div>
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-primary" id="placeBidBtn" disabled onclick="placeBid()">📤 הגש הצעה</button>
+                </div>
+            </div>
+            <div class="error-msg" id="bidError"></div>
+
+            <div class="teacher-controls">
+                <button class="btn btn-success" id="closeAuctionBtn" disabled onclick="closeAuction()">🔨 מכור לגבוה ביותר!</button>
+                <button class="btn btn-danger btn-sm" id="cancelAuctionBtn" disabled onclick="cancelAuction()">✕ בטל</button>
+            </div>
+        </div>
+
+        <!-- Values list -->
+        <div class="panel">
+            <div class="panel-title">📋 רשימת הערכים</div>
+            <div id="valuesList"></div>
+        </div>
+    </div>
+
+    <!-- ══ Log ══ -->
+    <div class="panel log-panel">
+        <div class="panel-title">📜 יומן פעילות</div>
+        <div id="activityLog"></div>
+    </div>
+
+</div>
+
+<!-- ══ Edit Students Modal ══ -->
+<div class="modal-overlay" id="editStudentsModal">
+    <div class="modal">
+        <h2>✏️ עריכת רשימת משתתפים</h2>
+        <p class="edit-note">שם אחד בכל שורה. שינוי הרשימה יאפס את כל התקציבים והרכישות.</p>
+        <textarea id="studentsTextarea" placeholder="שם תלמיד&#10;שם תלמיד&#10;..."></textarea>
+        <div class="modal-footer">
+            <button class="btn btn-gray" onclick="closeEditStudents()">ביטול</button>
+            <button class="btn btn-primary" onclick="applyStudents()">✔ עדכן רשימה</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══ Summary Modal ══ -->
+<div class="modal-overlay" id="summaryModal">
+    <div class="modal">
+        <h2>📊 סיכום המכירה הפומבית</h2>
+
+        <div class="summary-section-title">📦 סיכום לפי ערכים</div>
+        <table class="items-table" id="itemsSummaryTable">
+            <thead>
+                <tr>
+                    <th>ערך</th>
+                    <th>מספר הצעות</th>
+                    <th>הצעה זוכה</th>
+                    <th>זוכה</th>
+                </tr>
+            </thead>
+            <tbody id="itemsSummaryBody"></tbody>
+        </table>
+
+        <div class="summary-section-title">👥 סיכום לפי תלמידים</div>
+        <div class="summary-grid" id="summaryContent"></div>
+
+        <br>
+        <button class="btn btn-primary" onclick="closeSummary()" style="width:100%">סגור</button>
+    </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+//  DEFAULT DATA
+// ══════════════════════════════════════
+const DEFAULT_STUDENTS = [
+    "אלבז אלכס","בן חמו אביתר","ג'ונסטון כרמל","גיא אלום נויה",
+    "דוד נתאי","דוד פור נטע","דונט אורי","דלופינו ארי",
+    "הורוביץ אביגייל","הרפז אלון","ויטונסקי יונתן","ולד איתי",
+    "חבקין אריאל","חיימוביץ שחר","כהן אמי","ליכטר שירה",
+    "לסרי חן","מויאל ריף","מיכאלי נועה","סבאן איתמר",
+    "סיני אלה","עוזיאלי יונתן","עמיחי יואב","פז אלון",
+    "פרימט יובל","צדקיהו אלונה","צורף רוני","רובין ענבר",
+    "רחמים רועי","שגב בן חמו נועם","שוחט אלון","שושני בר","שנרגס עדי"
+];
+
+const VALUES_RAW = [
+    { name:"חברות אמת",                  desc:"חבר או חברה שאפשר לסמוך עליהם בכל מצב, בשיא הכנות ובלי תנאים." },
+    { name:"הצלחה אקדמית ללא מאמץ",      desc:"לקבל 100 בכל המבחנים והעבודות בלי להשקיע דקה של למידה." },
+    { name:"אינטליגנציה רגשית (אמפתיה)", desc:"היכולת להבין תמיד מה אחרים מרגישים ולדעת בדיוק מה לומר להם." },
+    { name:"עושר כלכלי",                  desc:"חשבון בנק עם מיליון דולר שמאפשר לקנות כל מה שרוצים." },
+    { name:"ביטחון עצמי גבוה",            desc:"להרגיש תמיד בנוח עם עצמי, בלי לחשוש ממה שאחרים יגידו או יחשבו." },
+    { name:"השפעה חברתית/פוליטית",        desc:"היכולת להוביל שינויים גדולים ולהשפיע על החלטות חשובות במדינה." },
+    { name:"בריאות איתנה",                desc:"להבטיח בריאות מושלמת ואריכות ימים לי ולבני המשפחה שלי." },
+    { name:"זמן פנוי אינסופי",            desc:'האפשרות לעשות רק מה שאני אוהב/ת, מתי שאני רוצה, בלי "חובות" ומטלות.' },
+    { name:"פופולריות חברתית",            desc:"להיות הילד או הילדה הכי מקובלים ואהובים בשכבה ובמדיה החברתית." },
+    { name:"אומץ חברתי",                  desc:"היכולת לעמוד על שלי ולהשמיע את קולי גם כשהרוב חושב אחרת." },
+    { name:"כישרון יוצא דופן",            desc:"להיות הכי טוב/ה בעולם בתחום מסוים (ספורט, מוזיקה, גיימינג וכו')." },
+    { name:"משפחה עוטפת",                 desc:"בית שתמיד מפרגן, מבין ומקבל אותי בדיוק כפי שאני, ללא ביקורת." },
+    { name:"תיקון עולם (איכות הסביבה)",   desc:"להבטיח שהדור שלנו יחיה בעולם ירוק, נקי וללא זיהום." },
+    { name:"היכולת לסלוח ולשחרר",         desc:"לא לשמור טינה לעולם ולהצליח להשתחרר מכעסים פנימיים בקלות." },
+    { name:"חופש בחירה מלא",              desc:"לקבל החלטות על חיי (איך להתלבש, מה ללמוד, לאן ללכת) ללא התערבות של מבוגרים." }
+];
+
+// ══════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════
+let students = DEFAULT_STUDENTS.map(name => ({ name, budget: 1000, bought: [] }));
+let values   = VALUES_RAW.map((v, i) => ({ ...v, id: i, status: 'pending', winner: null, finalPrice: null, bidCount: 0 }));
+let auction  = null; // { valueId, currentBid, currentBidderId }
+
+// ══════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════
+const fmt = n => n.toLocaleString('he-IL') + ' ₪';
+const now  = () => { const d = new Date(); return [d.getHours(),d.getMinutes(),d.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':'); };
+
+function addLog(msg, type = 'info') {
+    const log = document.getElementById('activityLog');
+    const el  = document.createElement('div');
+    el.className = `log-entry ${type}`;
+    el.innerHTML = `<div class="log-time">${now()}</div>${msg}`;
+    log.insertBefore(el, log.firstChild);
+}
+
+function clearErr() { document.getElementById('bidError').textContent = ''; }
+
+// ══════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════
+function renderStudents() {
+    const list   = document.getElementById('studentsList');
+    const select = document.getElementById('bidderSelect');
+    const prev   = select.value;
+
+    list.innerHTML   = '';
+    select.innerHTML = '<option value="">— בחר תלמיד —</option>';
+
+    students.forEach((s, i) => {
+        const leading   = auction && auction.currentBidderId === i;
+        const lowBudget = s.budget < 200;
+
+        const div = document.createElement('div');
+        div.className = 'student-item' + (leading ? ' leading' : '');
+        div.innerHTML = `
+            <span>${leading ? '🔝 ' : ''}${s.name}</span>
+            <span class="student-budget${lowBudget ? ' low' : ''}">${fmt(s.budget)}</span>`;
+        list.appendChild(div);
+
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = `${s.name} (${fmt(s.budget)})`;
+        if (s.budget === 0) opt.disabled = true;
+        select.appendChild(opt);
+    });
+
+    if (prev) select.value = prev;
+}
+
+function renderValues() {
+    const container = document.getElementById('valuesList');
+    container.innerHTML = '';
+
+    values.forEach(v => {
+        const div = document.createElement('div');
+        div.className = 'value-row' +
+            (v.status === 'active' ? ' vr-active' : '') +
+            (v.status === 'sold'   ? ' vr-sold'   : '');
+
+        let right = '';
+        if (v.status === 'sold') {
+            right = `<span class="sold-tag">✔ ${v.winner} — ${fmt(v.finalPrice)}</span>`;
+        } else if (v.status === 'active') {
+            right = `<span style="font-size:0.8rem;color:#667eea;font-weight:700">🔴 פעיל...</span>`;
+        } else {
+            right = `<button class="btn btn-primary btn-sm" onclick="startAuction(${v.id})">פתח מכירה</button>`;
+        }
+
+        div.innerHTML = `<span class="vr-name">${v.name}</span><div class="vr-right">${right}</div>`;
+        container.appendChild(div);
+    });
+}
+
+function renderCard() {
+    const card      = document.getElementById('auctionCard');
+    const badge     = document.getElementById('statusBadge');
+    const namEl     = document.getElementById('aValueName');
+    const descEl    = document.getElementById('aValueDesc');
+    const curBid    = document.getElementById('sCurBid');
+    const curBidder = document.getElementById('sCurBidder');
+    const bidBtn    = document.getElementById('placeBidBtn');
+    const closeBtn  = document.getElementById('closeAuctionBtn');
+    const cancelBtn = document.getElementById('cancelAuctionBtn');
+    const sel       = document.getElementById('bidderSelect');
+    const amtIn     = document.getElementById('bidAmount');
+
+    const live = !!auction;
+    card.className = 'panel auction-card' + (live ? ' live' : '');
+
+    if (!live) {
+        badge.className    = 'status-badge badge-wait';
+        badge.textContent  = '⏳ ממתין למכירה';
+        namEl.textContent  = 'בחר ערך לפתיחת מכירה';
+        descEl.textContent = 'לחץ על "פתח מכירה" ליד אחד הערכים למטה כדי להתחיל.';
+        curBid.textContent = curBidder.textContent = '—';
+        [bidBtn, closeBtn, cancelBtn, sel, amtIn].forEach(el => el.disabled = true);
+    } else {
+        const v = values[auction.valueId];
+        badge.className    = 'status-badge badge-live';
+        badge.textContent  = '🔴 מכירה פעילה';
+        namEl.textContent  = v.name;
+        descEl.textContent = v.desc;
+
+        curBid.textContent    = auction.currentBid > 0 ? fmt(auction.currentBid) : 'פתיחה';
+        curBidder.textContent = auction.currentBidderId !== null ? students[auction.currentBidderId].name : '—';
+
+        [bidBtn, cancelBtn, sel, amtIn].forEach(el => el.disabled = false);
+        closeBtn.disabled = auction.currentBid === 0;
+    }
+}
+
+function renderAll() { renderStudents(); renderValues(); renderCard(); }
+
+// ══════════════════════════════════════
+//  AUCTION ACTIONS
+// ══════════════════════════════════════
+function startAuction(valueId) {
+    if (auction) { alert('יש מכירה פעילה — סגור אותה קודם.'); return; }
+    auction = { valueId, currentBid: 0, currentBidderId: null };
+    values[valueId].status = 'active';
+    addLog(`📢 <strong>${values[valueId].name}</strong> — נפתחה למכירה!`, 'info');
+    renderAll();
+}
+
+function placeBid() {
+    clearErr();
+    if (!auction) return;
+
+    const err    = document.getElementById('bidError');
+    const selVal = document.getElementById('bidderSelect').value;
+    const amount = parseInt(document.getElementById('bidAmount').value);
+
+    if (selVal === '') { err.textContent = 'יש לבחור תלמיד.'; return; }
+    const idx = parseInt(selVal);
+
+    if (auction.currentBidderId === idx) {
+        err.textContent = `${students[idx].name} כבר מוביל — לא ניתן להגיש הצעה נגד עצמך.`;
+        return;
+    }
+    if (isNaN(amount) || amount <= 0) { err.textContent = 'יש להזין סכום תקין.'; return; }
+    if (amount <= auction.currentBid) {
+        err.textContent = `הסכום חייב להיות מעל ההצעה הנוכחית (${fmt(auction.currentBid)}).`;
+        return;
+    }
+    if (amount > students[idx].budget) {
+        err.textContent = `${students[idx].name} אין מספיק כסף (יתרה: ${fmt(students[idx].budget)}).`;
+        return;
+    }
+
+    auction.currentBid      = amount;
+    auction.currentBidderId = idx;
+    values[auction.valueId].bidCount++;
+
+    addLog(`💰 <strong>${students[idx].name}</strong> הציע ${fmt(amount)} על <strong>${values[auction.valueId].name}</strong>`, 'bid');
+    document.getElementById('bidAmount').value = '';
+    renderAll();
+}
+
+function closeAuction() {
+    if (!auction || auction.currentBid === 0) return;
+
+    const v     = values[auction.valueId];
+    const idx   = auction.currentBidderId;
+    const price = auction.currentBid;
+
+    students[idx].budget -= price;
+    students[idx].bought.push({ name: v.name, price });
+    v.status     = 'sold';
+    v.winner     = students[idx].name;
+    v.finalPrice = price;
+
+    addLog(`🎉 <strong>${v.name}</strong> נמכר ל-<strong>${students[idx].name}</strong> ב-${fmt(price)}!`, 'sold');
+
+    auction = null;
+    document.getElementById('bidAmount').value = '';
+    clearErr();
+    renderAll();
+}
+
+function cancelAuction() {
+    if (!auction) return;
+    if (!confirm('לבטל את המכירה הנוכחית?')) return;
+    values[auction.valueId].status = 'pending';
+    auction = null;
+    addLog('❌ המכירה בוטלה.', 'info');
+    document.getElementById('bidAmount').value = '';
+    clearErr();
+    renderAll();
+}
+
+// ══════════════════════════════════════
+//  EDIT STUDENTS
+// ══════════════════════════════════════
+function openEditStudents() {
+    document.getElementById('studentsTextarea').value = students.map(s => s.name).join('\n');
+    document.getElementById('editStudentsModal').classList.add('open');
+}
+
+function closeEditStudents() {
+    document.getElementById('editStudentsModal').classList.remove('open');
+}
+
+function applyStudents() {
+    const names = document.getElementById('studentsTextarea').value
+        .split('\n')
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+
+    if (names.length === 0) { alert('יש להכניס לפחות תלמיד אחד.'); return; }
+
+    const hasSales = values.some(v => v.status === 'sold');
+    if (hasSales) {
+        if (!confirm('שינוי הרשימה יאפס את כל הרכישות והתקציבים. להמשיך?')) return;
+        // Reset values too
+        values.forEach(v => { v.status = 'pending'; v.winner = null; v.finalPrice = null; v.bidCount = 0; });
+        auction = null;
+        document.getElementById('activityLog').innerHTML = '';
+    }
+
+    students = names.map(name => ({ name, budget: 1000, bought: [] }));
+    closeEditStudents();
+    addLog(`✏️ רשימת המשתתפים עודכנה — ${names.length} תלמידים.`, 'info');
+    renderAll();
+}
+
+// ══════════════════════════════════════
+//  SUMMARY
+// ══════════════════════════════════════
+function showSummary() {
+    // Items table
+    const tbody = document.getElementById('itemsSummaryBody');
+    tbody.innerHTML = '';
+    values.forEach(v => {
+        const tr = document.createElement('tr');
+        let winnerCell, priceCell;
+
+        if (v.status === 'sold') {
+            priceCell  = `<td class="winner-cell">${fmt(v.finalPrice)}</td>`;
+            winnerCell = `<td class="winner-cell">🏆 ${v.winner}</td>`;
+        } else if (v.status === 'active') {
+            priceCell  = `<td class="pending-cell">${auction && auction.currentBid > 0 ? fmt(auction.currentBid) + ' (בתהליך)' : '—'}</td>`;
+            winnerCell = `<td class="pending-cell">בתהליך...</td>`;
+        } else {
+            priceCell  = `<td class="pending-cell">—</td>`;
+            winnerCell = `<td class="pending-cell">לא נמכר</td>`;
+        }
+
+        const bidCount = v.bidCount + (v.status === 'active' && auction && auction.currentBid > 0 ? 0 : 0);
+        tr.innerHTML = `
+            <td>${v.name}</td>
+            <td><span class="bid-count-badge">${v.bidCount}</span></td>
+            ${priceCell}
+            ${winnerCell}`;
+        tbody.appendChild(tr);
+    });
+
+    // Students grid
+    const content = document.getElementById('summaryContent');
+    content.innerHTML = '';
+    students.forEach(s => {
+        const card = document.createElement('div');
+        card.className = 'summary-card';
+        const items = s.bought.length
+            ? s.bought.map(b => `<div class="bought-item">✔ ${b.name} — ${fmt(b.price)}</div>`).join('')
+            : '<div class="no-buy">לא רכש ערכים</div>';
+        card.innerHTML = `<h3>${s.name}<span class="budget">${fmt(s.budget)} נותר</span></h3>${items}`;
+        content.appendChild(card);
+    });
+
+    document.getElementById('summaryModal').classList.add('open');
+}
+
+function closeSummary() {
+    document.getElementById('summaryModal').classList.remove('open');
+}
+
+// ══════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════
+renderAll();
+addLog('🏛️ המכירה הפומבית מוכנה להתחיל!', 'info');
+</script>
+</body>
+</html>
