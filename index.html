@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <style>
         :root {
             --bg:        #080c18;
@@ -748,6 +749,7 @@ let sessionRef = null;
 // ══════════════════════════════════════
 const fmt = n => n.toLocaleString('he-IL') + ' ₪';
 const now  = () => { const d = new Date(); return [d.getHours(),d.getMinutes(),d.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':'); };
+const esc  = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
 function addLog(msg, type = 'info') {
     const log = document.getElementById('activityLog');
@@ -776,7 +778,7 @@ function renderStudents() {
 
         const div = document.createElement('div');
         div.className = 'student-item' + (leading ? ' leading' : '');
-        div.innerHTML = `<span class="student-name">${s.name}</span>
+        div.innerHTML = `<span class="student-name">${esc(s.name)}</span>
             <span class="student-budget${lowBudget ? ' low' : ''}">${fmt(s.budget)}</span>`;
         list.appendChild(div);
 
@@ -802,14 +804,14 @@ function renderValues() {
 
         let right = '';
         if (v.status === 'sold') {
-            right = `<span class="sold-tag">✔ ${v.winner} — ${fmt(v.finalPrice)}</span>`;
+            right = `<span class="sold-tag">✔ ${esc(v.winner)} — ${fmt(v.finalPrice)}</span>`;
         } else if (v.status === 'active') {
             right = `<span class="active-tag">פעיל...</span>`;
         } else {
             right = `<button class="btn btn-primary btn-sm" onclick="startAuction(${v.id})">פתח מכירה</button>`;
         }
 
-        div.innerHTML = `<span class="vr-name">${v.name}</span><div class="vr-right">${right}</div>`;
+        div.innerHTML = `<span class="vr-name">${esc(v.name)}</span><div class="vr-right">${right}</div>`;
         container.appendChild(div);
     });
 }
@@ -864,7 +866,7 @@ function startAuction(valueId) {
     if (auction) { alert('יש מכירה פעילה — סגור אותה קודם.'); return; }
     auction = { valueId, currentBid: 0, currentBidderId: null };
     values[valueId].status = 'active';
-    addLog(`📢 <strong>${values[valueId].name}</strong> — נפתחה למכירה!`, 'info');
+    addLog(`📢 <strong>${esc(values[valueId].name)}</strong> — נפתחה למכירה!`, 'info');
     renderAll();
 }
 
@@ -883,7 +885,7 @@ function placeBid() {
     auction.currentBid      = amount;
     auction.currentBidderId = idx;
     values[auction.valueId].bidCount++;
-    addLog(`💰 <strong>${students[idx].name}</strong> הציע ${fmt(amount)} על <strong>${values[auction.valueId].name}</strong>`, 'bid');
+    addLog(`💰 <strong>${esc(students[idx].name)}</strong> הציע ${fmt(amount)} על <strong>${esc(values[auction.valueId].name)}</strong>`, 'bid');
     document.getElementById('bidAmount').value = '';
     renderAll();
 }
@@ -898,7 +900,7 @@ function closeAuction() {
     v.status     = 'sold';
     v.winner     = students[idx].name;
     v.finalPrice = price;
-    addLog(`🎉 <strong>${v.name}</strong> נמכר ל-<strong>${students[idx].name}</strong> ב-${fmt(price)}!`, 'sold');
+    addLog(`🎉 <strong>${esc(v.name)}</strong> נמכר ל-<strong>${esc(students[idx].name)}</strong> ב-${fmt(price)}!`, 'sold');
     auction = null;
     document.getElementById('bidAmount').value = '';
     clearErr();
@@ -1016,7 +1018,7 @@ function showSummary() {
         let winnerCell, priceCell;
         if (v.status === 'sold') {
             priceCell  = `<td class="winner-cell">${fmt(v.finalPrice)}</td>`;
-            winnerCell = `<td class="winner-cell">🏆 ${v.winner}</td>`;
+            winnerCell = `<td class="winner-cell">🏆 ${esc(v.winner)}</td>`;
         } else if (v.status === 'active') {
             priceCell  = `<td class="pending-cell">${auction && auction.currentBid > 0 ? fmt(auction.currentBid) + ' (בתהליך)' : '—'}</td>`;
             winnerCell = `<td class="pending-cell">בתהליך...</td>`;
@@ -1024,7 +1026,7 @@ function showSummary() {
             priceCell  = `<td class="pending-cell">—</td>`;
             winnerCell = `<td class="pending-cell">לא נמכר</td>`;
         }
-        tr.innerHTML = `<td>${v.name}</td><td><span class="bid-count-badge">${v.bidCount}</span></td>${priceCell}${winnerCell}`;
+        tr.innerHTML = `<td>${esc(v.name)}</td><td><span class="bid-count-badge">${v.bidCount}</span></td>${priceCell}${winnerCell}`;
         tbody.appendChild(tr);
     });
     const content = document.getElementById('summaryContent');
@@ -1033,9 +1035,9 @@ function showSummary() {
         const card = document.createElement('div');
         card.className = 'summary-card';
         const items = s.bought.length
-            ? s.bought.map(b => `<div class="bought-item">✔ ${b.name} — ${fmt(b.price)}</div>`).join('')
+            ? s.bought.map(b => `<div class="bought-item">✔ ${esc(b.name)} — ${fmt(b.price)}</div>`).join('')
             : '<div class="no-buy">לא רכש ערכים</div>';
-        card.innerHTML = `<h3>${s.name}<span class="budget">${fmt(s.budget)} נותר</span></h3>${items}`;
+        card.innerHTML = `<h3>${esc(s.name)}<span class="budget">${fmt(s.budget)} נותר</span></h3>${items}`;
         content.appendChild(card);
     });
     document.getElementById('summaryModal').classList.add('open');
@@ -1046,7 +1048,9 @@ function closeSummary() { document.getElementById('summaryModal').classList.remo
 //  REMOTE SESSION — TEACHER
 // ══════════════════════════════════════
 function generateSessionId() {
-    return Math.random().toString(36).substring(2, 8).toUpperCase();
+    const arr = new Uint8Array(4);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, b => b.toString(36).padStart(2, '0')).join('').toUpperCase().substring(0, 6);
 }
 
 function openRemoteModal() {
@@ -1096,8 +1100,9 @@ function startRemoteSession() {
     const studentLink = getStudentLink();
     document.getElementById('remoteSessionCode').textContent = sessionId;
     document.getElementById('remoteLinkText').textContent = studentLink;
-    document.getElementById('remoteQr').src =
-        'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + encodeURIComponent(studentLink);
+    QRCode.toDataURL(studentLink, { width: 160, margin: 1 }, (err, url) => {
+        if (!err) document.getElementById('remoteQr').src = url;
+    });
 
     document.getElementById('remotePreStart').style.display = 'none';
     document.getElementById('remoteActive').style.display = 'block';
@@ -1152,7 +1157,7 @@ function applyStudentBid({ studentIdx, amount }) {
     auction.currentBidderId = idx;
     values[auction.valueId].bidCount++;
 
-    addLog(`💰 <strong>${students[idx].name}</strong> הציע ${fmt(amount)} (מרחוק) על <strong>${values[auction.valueId].name}</strong>`, 'bid');
+    addLog(`💰 <strong>${esc(students[idx].name)}</strong> הציע ${fmt(amount)} (מרחוק) על <strong>${esc(values[auction.valueId].name)}</strong>`, 'bid');
     renderAll(); // renderAll calls syncStateToFirebase
     // Clear the pending bid
     sessionRef.child('pendingBid').remove();
@@ -1281,8 +1286,8 @@ function renderStudentView(state) {
         <div class="s-live-card">
             <div class="s-live-badge">מכירה פעילה</div>
             ${amLeading ? '<div class="s-leading-banner">🏆 אתה מוביל!</div>' : ''}
-            <div class="s-value-name">${v.name}</div>
-            <div class="s-value-desc">${v.desc}</div>
+            <div class="s-value-name">${esc(v.name)}</div>
+            <div class="s-value-desc">${esc(v.desc)}</div>
             <div class="s-bid-stats">
                 <div class="s-stat-box">
                     <div class="s-stat-label">הצעה גבוהה</div>
@@ -1290,7 +1295,7 @@ function renderStudentView(state) {
                 </div>
                 <div class="s-stat-box">
                     <div class="s-stat-label">מציע</div>
-                    <div class="s-stat-bidder">${bidderName}</div>
+                    <div class="s-stat-bidder">${esc(bidderName)}</div>
                 </div>
             </div>
             <div class="s-bid-form">
@@ -1310,7 +1315,7 @@ function renderStudentView(state) {
     if (me.bought && me.bought.length > 0) {
         html += `<div class="s-bought-section">
             <div class="s-bought-title">הערכים שרכשת</div>
-            ${me.bought.map(b => `<div class="s-bought-item"><span>${b.name}</span><span class="s-bought-price">${fmt(b.price)}</span></div>`).join('')}
+            ${me.bought.map(b => `<div class="s-bought-item"><span>${esc(b.name)}</span><span class="s-bought-price">${fmt(b.price)}</span></div>`).join('')}
         </div>`;
     }
 
@@ -1334,9 +1339,17 @@ function submitStudentBid() {
         if (amount <= a.currentBid) { err.textContent = `ההצעה חייבת להיות מעל ${fmt(a.currentBid)}.`; return; }
         if (amount > st[myStudentIdx].budget) { err.textContent = `אין לך מספיק כסף (יתרה: ${fmt(st[myStudentIdx].budget)}).`; return; }
 
-        // Submit bid
-        db.ref('sessions/' + SESSION_PARAM + '/pendingBid').set({ studentIdx: myStudentIdx, amount });
-        if (input) input.value = '';
+        // Submit bid atomically — aborts if another bid is already pending
+        db.ref('sessions/' + SESSION_PARAM + '/pendingBid').transaction(current => {
+            if (current !== null) return; // abort: another bid in flight
+            return { studentIdx: myStudentIdx, amount };
+        }).then(result => {
+            if (!result.committed) {
+                err.textContent = 'הצעה אחרת בתהליך — נסה שנית.';
+            } else if (input) {
+                input.value = '';
+            }
+        });
     });
 }
 
