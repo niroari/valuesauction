@@ -564,7 +564,6 @@
 
         /* ─────────────── VALUES LIST ─────────────── */
         .values-panel {
-            flex: 1;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -656,6 +655,7 @@
 
         /* ─────────────── LOG PANEL ─────────────── */
         .log-panel {
+            flex: 1;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -1108,20 +1108,20 @@
             </div>
         </div>
 
-        <!-- Values list -->
-        <div class="panel values-panel">
-            <div class="panel-title">רשימת הערכים</div>
-            <div class="values-scroll">
-                <div id="valuesList"></div>
+        <!-- Log -->
+        <div class="panel log-panel">
+            <div class="panel-title">יומן פעילות</div>
+            <div class="log-scroll">
+                <div id="activityLog"></div>
             </div>
         </div>
     </div>
 
-    <!-- ══ Log ══ -->
-    <div class="panel log-panel">
-        <div class="panel-title">יומן פעילות</div>
-        <div class="log-scroll">
-            <div id="activityLog"></div>
+    <!-- ══ Values list ══ -->
+    <div class="panel values-panel">
+        <div class="panel-title">רשימת הערכים</div>
+        <div class="values-scroll">
+            <div id="valuesList"></div>
         </div>
     </div>
 
