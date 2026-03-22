@@ -1120,7 +1120,11 @@ function endRemoteSession() {
 
 function syncStateToFirebase() {
     if (!sessionRef) return;
-    sessionRef.child('state').set({ students, values, auction });
+    // Firebase drops null values, so we use -1 to mean "nobody bidding yet"
+    const auctionToSync = auction
+        ? { ...auction, currentBidderId: auction.currentBidderId ?? -1 }
+        : null;
+    sessionRef.child('state').set({ students, values, auction: auctionToSync });
 }
 
 function getStudentLink() {
@@ -1269,9 +1273,9 @@ function renderStudentView(state) {
         </div>`;
     } else {
         const v = state.values[remoteAuction.valueId];
-        const amLeading = remoteAuction.currentBidderId === myStudentIdx;
-        const bidderName = remoteAuction.currentBidderId !== null
-            ? state.students[remoteAuction.currentBidderId].name : '—';
+        const bidderIdx = (remoteAuction.currentBidderId ?? -1);
+        const amLeading = bidderIdx === myStudentIdx;
+        const bidderName = bidderIdx >= 0 ? state.students[bidderIdx].name : '—';
 
         html = `
         <div class="s-live-card">
@@ -1326,7 +1330,7 @@ function submitStudentBid() {
         const state = snap.val();
         if (!state || !state.auction) { err.textContent = 'אין מכירה פעילה כרגע.'; return; }
         const { auction: a, students: st } = state;
-        if (a.currentBidderId === myStudentIdx) { err.textContent = 'אתה כבר מוביל!'; return; }
+        if ((a.currentBidderId ?? -1) === myStudentIdx) { err.textContent = 'אתה כבר מוביל!'; return; }
         if (amount <= a.currentBid) { err.textContent = `ההצעה חייבת להיות מעל ${fmt(a.currentBid)}.`; return; }
         if (amount > st[myStudentIdx].budget) { err.textContent = `אין לך מספיק כסף (יתרה: ${fmt(st[myStudentIdx].budget)}).`; return; }
 
