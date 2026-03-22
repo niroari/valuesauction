@@ -7,6 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
     <style>
         :root {
             --bg:        #080c18;
@@ -15,25 +17,19 @@
             --bg4:       #1e2847;
             --border:    rgba(255,255,255,0.07);
             --border2:   rgba(255,255,255,0.13);
-
             --gold:      #f0a500;
             --gold-glow: rgba(240,165,0,0.35);
             --gold-dim:  rgba(240,165,0,0.15);
-
             --cyan:      #00c8ff;
             --cyan-glow: rgba(0,200,255,0.3);
             --cyan-dim:  rgba(0,200,255,0.1);
-
             --green:     #00c97a;
             --green-dim: rgba(0,201,122,0.12);
-
             --red:       #ff4040;
             --red-dim:   rgba(255,64,64,0.12);
-
             --text:      #e8edf8;
             --text-dim:  #7a8baa;
             --text-muted:#4a5878;
-
             --radius:    12px;
             --radius-lg: 18px;
         }
@@ -48,7 +44,6 @@
             overflow-x: hidden;
         }
 
-        /* ─────────────── BACKGROUND GRID ─────────────── */
         body::before {
             content: '';
             position: fixed;
@@ -61,7 +56,7 @@
             z-index: 0;
         }
 
-        /* ─────────────── HEADER ─────────────── */
+        /* ── HEADER ── */
         header {
             position: relative;
             z-index: 10;
@@ -75,963 +70,418 @@
             gap: 1rem;
             backdrop-filter: blur(20px);
         }
-
         header::after {
             content: '';
             position: absolute;
             bottom: 0; left: 0; right: 0;
             height: 1px;
-            background: linear-gradient(90deg,
-                transparent 0%,
-                var(--gold) 30%,
-                var(--cyan) 70%,
-                transparent 100%);
+            background: linear-gradient(90deg, transparent 0%, var(--gold) 30%, var(--cyan) 70%, transparent 100%);
             opacity: 0.5;
         }
-
-        .header-logo {
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-        }
-
-        .header-logo .gavel {
-            font-size: 1.5rem;
-            filter: drop-shadow(0 0 8px var(--gold));
-        }
-
-        .header-logo h1 {
-            font-size: 1.2rem;
-            font-weight: 900;
-            letter-spacing: -0.02em;
-            color: var(--text);
-        }
-
-        .header-logo h1 span {
-            color: var(--gold);
-        }
-
-        .header-sub {
-            font-size: 0.72rem;
-            color: var(--text-dim);
-            font-weight: 400;
-            margin-top: 1px;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
+        .header-logo { display: flex; align-items: center; gap: 0.6rem; }
+        .header-logo .gavel { font-size: 1.5rem; filter: drop-shadow(0 0 8px var(--gold)); }
+        .header-logo h1 { font-size: 1.2rem; font-weight: 900; letter-spacing: -0.02em; color: var(--text); }
+        .header-logo h1 span { color: var(--gold); }
+        .header-sub { font-size: 0.72rem; color: var(--text-dim); font-weight: 400; margin-top: 1px; }
+        .header-actions { display: flex; gap: 0.5rem; }
 
         .hbtn {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
+            display: flex; align-items: center; gap: 0.4rem;
             padding: 0.4rem 0.9rem;
-            background: var(--bg3);
-            border: 1px solid var(--border2);
-            color: var(--text-dim);
-            border-radius: 8px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: inherit;
-            transition: all 0.18s;
-            white-space: nowrap;
+            background: var(--bg3); border: 1px solid var(--border2);
+            color: var(--text-dim); border-radius: 8px;
+            font-size: 0.8rem; font-weight: 600; cursor: pointer;
+            font-family: inherit; transition: all 0.18s; white-space: nowrap;
         }
-        .hbtn:hover {
-            background: var(--bg4);
-            border-color: var(--gold);
-            color: var(--gold);
-        }
-        .hbtn.summary {
-            border-color: rgba(240,165,0,0.3);
-            color: var(--gold);
-            background: var(--gold-dim);
-        }
-        .hbtn.summary:hover {
-            background: rgba(240,165,0,0.25);
-            border-color: var(--gold);
-        }
+        .hbtn:hover { background: var(--bg4); border-color: var(--gold); color: var(--gold); }
+        .hbtn.summary { border-color: rgba(240,165,0,0.3); color: var(--gold); background: var(--gold-dim); }
+        .hbtn.summary:hover { background: rgba(240,165,0,0.25); border-color: var(--gold); }
+        .hbtn.remote-active { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+        .hbtn.remote-active:hover { background: rgba(0,201,122,0.2); }
 
-        /* ─────────────── LAYOUT ─────────────── */
+        /* ── LAYOUT ── */
         .main-grid {
-            position: relative;
-            z-index: 1;
+            position: relative; z-index: 1;
             display: grid;
             grid-template-columns: 240px 1fr 260px;
-            gap: 0.75rem;
-            padding: 0.75rem;
-            max-width: 1440px;
-            margin: 0 auto;
+            gap: 0.75rem; padding: 0.75rem;
+            max-width: 1440px; margin: 0 auto;
             height: calc(100vh - 62px);
         }
 
-        /* ─────────────── PANEL ─────────────── */
+        /* ── PANEL ── */
         .panel {
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 1rem;
-            overflow: hidden;
+            background: var(--bg2); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); padding: 1rem; overflow: hidden;
         }
-
         .panel-title {
-            font-size: 0.7rem;
-            font-weight: 700;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            font-size: 0.7rem; font-weight: 700; letter-spacing: 0.12em;
+            text-transform: uppercase; color: var(--text-muted);
+            margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;
         }
         .panel-title::before {
-            content: '';
-            display: block;
-            width: 3px;
-            height: 12px;
-            background: var(--cyan);
-            border-radius: 2px;
-            flex-shrink: 0;
+            content: ''; display: block; width: 3px; height: 12px;
+            background: var(--cyan); border-radius: 2px; flex-shrink: 0;
         }
 
-        /* ─────────────── STUDENTS PANEL ─────────────── */
-        .students-panel {
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .students-scroll {
-            overflow-y: auto;
-            flex: 1;
-            padding-left: 2px;
-        }
+        /* ── STUDENTS ── */
+        .students-panel { display: flex; flex-direction: column; overflow: hidden; }
+        .students-scroll { overflow-y: auto; flex: 1; padding-left: 2px; }
         .students-scroll::-webkit-scrollbar { width: 3px; }
         .students-scroll::-webkit-scrollbar-track { background: transparent; }
         .students-scroll::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
 
         .student-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.45rem 0.6rem;
-            margin-bottom: 0.28rem;
-            border-radius: 8px;
-            border: 1px solid transparent;
-            background: var(--bg3);
-            transition: all 0.2s;
-            font-size: 0.78rem;
-            position: relative;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.45rem 0.6rem; margin-bottom: 0.28rem;
+            border-radius: 8px; border: 1px solid transparent;
+            background: var(--bg3); transition: all 0.2s;
+            font-size: 0.78rem; position: relative;
         }
-
         .student-item.leading {
-            background: rgba(0,200,255,0.08);
-            border-color: rgba(0,200,255,0.3);
+            background: rgba(0,200,255,0.08); border-color: rgba(0,200,255,0.3);
             box-shadow: 0 0 12px rgba(0,200,255,0.12);
         }
-
         .student-item.leading::before {
-            content: '▶';
-            position: absolute;
-            right: -1px;
-            font-size: 0.55rem;
-            color: var(--cyan);
-            top: 50%;
-            transform: translateY(-50%);
+            content: '▶'; position: absolute; right: -1px;
+            font-size: 0.55rem; color: var(--cyan);
+            top: 50%; transform: translateY(-50%);
         }
+        .student-name { color: var(--text); font-weight: 500; font-size: 0.77rem; }
+        .student-item.leading .student-name { color: var(--cyan); font-weight: 700; }
+        .student-budget { font-weight: 700; font-size: 0.75rem; color: var(--green); font-variant-numeric: tabular-nums; }
+        .student-budget.low { color: var(--red); }
 
-        .student-name {
-            color: var(--text);
-            font-weight: 500;
-            font-size: 0.77rem;
-        }
+        /* ── CENTER ── */
+        .auction-area { display: flex; flex-direction: column; gap: 0.75rem; overflow: hidden; }
 
-        .student-item.leading .student-name {
-            color: var(--cyan);
-            font-weight: 700;
-        }
-
-        .student-budget {
-            font-weight: 700;
-            font-size: 0.75rem;
-            color: var(--green);
-            font-variant-numeric: tabular-nums;
-        }
-        .student-budget.low {
-            color: var(--red);
-        }
-
-        /* ─────────────── CENTER ─────────────── */
-        .auction-area {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            overflow: hidden;
-        }
-
-        /* ─────────────── AUCTION CARD ─────────────── */
+        /* ── AUCTION CARD ── */
         .auction-card {
-            position: relative;
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-lg);
-            padding: 1.5rem;
-            transition: all 0.4s ease;
-            overflow: hidden;
+            position: relative; background: var(--bg2); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); padding: 1.5rem;
+            transition: all 0.4s ease; overflow: hidden;
         }
-
         .auction-card::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            border-radius: var(--radius-lg);
+            content: ''; position: absolute; inset: 0; border-radius: var(--radius-lg);
             background: radial-gradient(ellipse at 50% 0%, rgba(240,165,0,0.04) 0%, transparent 65%);
-            pointer-events: none;
-            transition: opacity 0.4s;
-            opacity: 0;
+            pointer-events: none; transition: opacity 0.4s; opacity: 0;
         }
-
         .auction-card.live {
             border-color: rgba(240,165,0,0.4);
-            box-shadow:
-                0 0 0 1px rgba(240,165,0,0.15),
-                0 0 40px rgba(240,165,0,0.12),
-                0 20px 60px rgba(0,0,0,0.5);
+            box-shadow: 0 0 0 1px rgba(240,165,0,0.15), 0 0 40px rgba(240,165,0,0.12), 0 20px 60px rgba(0,0,0,0.5);
         }
-
-        .auction-card.live::before {
-            opacity: 1;
-        }
-
-        /* Scanning line when live */
+        .auction-card.live::before { opacity: 1; }
         .auction-card.live::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 2px;
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
             background: linear-gradient(90deg, transparent, var(--gold), transparent);
             animation: scan 2.5s ease-in-out infinite;
         }
-
         @keyframes scan {
-            0%   { transform: scaleX(0); transform-origin: right; opacity: 1; }
-            50%  { transform: scaleX(1); transform-origin: right; opacity: 1; }
-            50.01% { transform: scaleX(1); transform-origin: left; opacity: 1; }
-            100% { transform: scaleX(0); transform-origin: left; opacity: 0; }
+            0%     { transform: scaleX(0); transform-origin: right; opacity: 1; }
+            50%    { transform: scaleX(1); transform-origin: right; opacity: 1; }
+            50.01% { transform: scaleX(1); transform-origin: left;  opacity: 1; }
+            100%   { transform: scaleX(0); transform-origin: left;  opacity: 0; }
         }
 
-        /* ─── Status badge ─── */
         .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.35rem;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.72rem;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            margin-bottom: 1rem;
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            padding: 0.25rem 0.75rem; border-radius: 20px;
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em;
+            text-transform: uppercase; margin-bottom: 1rem;
         }
-
-        .badge-wait {
-            background: rgba(122,139,170,0.12);
-            color: var(--text-muted);
-            border: 1px solid rgba(122,139,170,0.2);
-        }
-
+        .badge-wait { background: rgba(122,139,170,0.12); color: var(--text-muted); border: 1px solid rgba(122,139,170,0.2); }
         .badge-live {
-            background: rgba(240,165,0,0.15);
-            color: var(--gold);
-            border: 1px solid rgba(240,165,0,0.35);
-            box-shadow: 0 0 12px rgba(240,165,0,0.2);
+            background: rgba(240,165,0,0.15); color: var(--gold);
+            border: 1px solid rgba(240,165,0,0.35); box-shadow: 0 0 12px rgba(240,165,0,0.2);
         }
-
         .badge-live::before {
-            content: '';
-            display: block;
-            width: 7px; height: 7px;
-            border-radius: 50%;
-            background: var(--gold);
-            box-shadow: 0 0 6px var(--gold);
+            content: ''; display: block; width: 7px; height: 7px; border-radius: 50%;
+            background: var(--gold); box-shadow: 0 0 6px var(--gold);
             animation: pulse-dot 1.2s ease-in-out infinite;
         }
-
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50%       { opacity: 0.5; transform: scale(0.7); }
-        }
-
+        @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.7)} }
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.6} }
 
-        .value-name {
-            font-size: 1.7rem;
-            font-weight: 900;
-            line-height: 1.15;
-            margin-bottom: 0.4rem;
-            color: var(--text);
-            letter-spacing: -0.02em;
-        }
+        .value-name { font-size: 1.7rem; font-weight: 900; line-height: 1.15; margin-bottom: 0.4rem; color: var(--text); letter-spacing: -0.02em; }
+        .auction-card.live .value-name { color: var(--gold); text-shadow: 0 0 40px rgba(240,165,0,0.3); }
+        .value-desc { font-size: 0.85rem; color: var(--text-dim); line-height: 1.6; margin-bottom: 1.25rem; min-height: 2.5em; }
 
-        .auction-card.live .value-name {
-            color: var(--gold);
-            text-shadow: 0 0 40px rgba(240,165,0,0.3);
-        }
-
-        .value-desc {
-            font-size: 0.85rem;
-            color: var(--text-dim);
-            line-height: 1.6;
-            margin-bottom: 1.25rem;
-            min-height: 2.5em;
-        }
-
-        /* ─── Bid stats ─── */
-        .bid-stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.6rem;
-            margin-bottom: 1.25rem;
-        }
-
-        .stat-box {
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 0.85rem 1rem;
-            text-align: center;
-            transition: all 0.3s;
-        }
-
-        .auction-card.live .stat-box {
-            border-color: rgba(240,165,0,0.15);
-        }
-
-        .stat-label {
-            font-size: 0.65rem;
-            font-weight: 700;
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-bottom: 0.35rem;
-        }
-
-        .stat-value {
-            font-size: 1.55rem;
-            font-weight: 900;
-            color: var(--text);
-            font-variant-numeric: tabular-nums;
-        }
-
+        .bid-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; margin-bottom: 1.25rem; }
+        .stat-box { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem 1rem; text-align: center; transition: all 0.3s; }
+        .auction-card.live .stat-box { border-color: rgba(240,165,0,0.15); }
+        .stat-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.35rem; }
+        .stat-value { font-size: 1.55rem; font-weight: 900; color: var(--text); font-variant-numeric: tabular-nums; }
         .stat-value.accent { color: var(--gold); }
 
-        /* ─── Bid controls ─── */
-        .bid-controls {
-            display: flex;
-            gap: 0.6rem;
-            align-items: flex-end;
-            flex-wrap: wrap;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 0.3rem;
-        }
-
-        .form-group label {
-            font-size: 0.68rem;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-        }
+        .bid-controls { display: flex; gap: 0.6rem; align-items: flex-end; flex-wrap: wrap; }
+        .form-group { display: flex; flex-direction: column; gap: 0.3rem; }
+        .form-group label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); }
 
         select, input[type="number"] {
             padding: 0.6rem 0.85rem;
-            background: var(--bg3);
-            border: 1px solid var(--border2);
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-family: inherit;
-            color: var(--text);
-            outline: none;
-            direction: rtl;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            -webkit-appearance: none;
+            background: var(--bg3); border: 1px solid var(--border2);
+            border-radius: 8px; font-size: 0.85rem; font-family: inherit;
+            color: var(--text); outline: none; direction: rtl;
+            transition: border-color 0.2s, box-shadow 0.2s; -webkit-appearance: none;
         }
         select { cursor: pointer; }
         select option { background: var(--bg3); }
-        select:focus, input[type="number"]:focus {
-            border-color: var(--gold);
-            box-shadow: 0 0 0 3px rgba(240,165,0,0.12);
-        }
-        select:disabled, input[type="number"]:disabled {
-            opacity: 0.35;
-            cursor: not-allowed;
-        }
+        select:focus, input[type="number"]:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(240,165,0,0.12); }
+        select:disabled, input[type="number"]:disabled { opacity: 0.35; cursor: not-allowed; }
 
-        /* ─── Buttons ─── */
+        /* ── BUTTONS ── */
         .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.4rem;
-            padding: 0.6rem 1.2rem;
-            border: none;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            cursor: pointer;
-            font-family: inherit;
-            transition: all 0.18s;
-            white-space: nowrap;
+            display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+            padding: 0.6rem 1.2rem; border: none; border-radius: 8px;
+            font-size: 0.85rem; font-weight: 700; cursor: pointer;
+            font-family: inherit; transition: all 0.18s; white-space: nowrap;
         }
         .btn:hover:not(:disabled) { transform: translateY(-1px); }
         .btn:active:not(:disabled) { transform: translateY(0); }
         .btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none !important; }
-
-        .btn-primary {
-            background: var(--cyan);
-            color: #080c18;
-            box-shadow: 0 0 16px rgba(0,200,255,0.25);
-        }
-        .btn-primary:hover:not(:disabled) {
-            background: #33d4ff;
-            box-shadow: 0 0 24px rgba(0,200,255,0.4);
-        }
-
+        .btn-primary { background: var(--cyan); color: #080c18; box-shadow: 0 0 16px rgba(0,200,255,0.25); }
+        .btn-primary:hover:not(:disabled) { background: #33d4ff; box-shadow: 0 0 24px rgba(0,200,255,0.4); }
         .btn-success {
-            background: var(--gold);
-            color: #080c18;
-            font-size: 1rem;
-            font-weight: 900;
-            padding: 0.75rem 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 0 24px var(--gold-glow);
-            width: 100%;
-            margin-top: 1rem;
+            background: var(--gold); color: #080c18; font-size: 1rem; font-weight: 900;
+            padding: 0.75rem 1.5rem; border-radius: 10px; box-shadow: 0 0 24px var(--gold-glow);
+            width: 100%; margin-top: 1rem;
         }
-        .btn-success:hover:not(:disabled) {
-            background: #ffb520;
-            box-shadow: 0 0 36px rgba(240,165,0,0.55);
-        }
-        .btn-success:disabled {
-            background: var(--bg3);
-            color: var(--text-muted);
-            box-shadow: none;
-        }
-
-        .btn-danger {
-            background: transparent;
-            color: var(--red);
-            border: 1px solid rgba(255,64,64,0.3);
-        }
-        .btn-danger:hover:not(:disabled) {
-            background: var(--red-dim);
-            border-color: var(--red);
-        }
-
-        .btn-gray {
-            background: var(--bg3);
-            color: var(--text-dim);
-            border: 1px solid var(--border2);
-        }
-        .btn-gray:hover:not(:disabled) {
-            background: var(--bg4);
-            color: var(--text);
-        }
-
+        .btn-success:hover:not(:disabled) { background: #ffb520; box-shadow: 0 0 36px rgba(240,165,0,0.55); }
+        .btn-success:disabled { background: var(--bg3); color: var(--text-muted); box-shadow: none; }
+        .btn-danger { background: transparent; color: var(--red); border: 1px solid rgba(255,64,64,0.3); }
+        .btn-danger:hover:not(:disabled) { background: var(--red-dim); border-color: var(--red); }
+        .btn-gray { background: var(--bg3); color: var(--text-dim); border: 1px solid var(--border2); }
+        .btn-gray:hover:not(:disabled) { background: var(--bg4); color: var(--text); }
         .btn-sm { padding: 0.38rem 0.75rem; font-size: 0.76rem; }
 
-        .teacher-controls {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-            flex-wrap: wrap;
-        }
+        .teacher-controls { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+        .error-msg { color: var(--red); font-size: 0.75rem; margin-top: 0.4rem; min-height: 1em; font-weight: 500; }
 
-        .error-msg {
-            color: var(--red);
-            font-size: 0.75rem;
-            margin-top: 0.4rem;
-            min-height: 1em;
-            font-weight: 500;
-        }
-
-        /* ─────────────── VALUES LIST ─────────────── */
-        .values-panel {
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .values-scroll {
-            overflow-y: auto;
-            flex: 1;
-        }
+        /* ── VALUES LIST ── */
+        .values-panel { overflow: hidden; display: flex; flex-direction: column; }
+        .values-scroll { overflow-y: auto; flex: 1; }
         .values-scroll::-webkit-scrollbar { width: 3px; }
         .values-scroll::-webkit-scrollbar-track { background: transparent; }
         .values-scroll::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
 
         .value-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0.55rem 0.8rem;
-            margin-bottom: 0.3rem;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: var(--bg3);
-            gap: 0.5rem;
-            transition: all 0.2s;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.55rem 0.8rem; margin-bottom: 0.3rem;
+            border-radius: 8px; border: 1px solid var(--border);
+            background: var(--bg3); gap: 0.5rem; transition: all 0.2s;
         }
-
-        .value-row:hover:not(.vr-sold):not(.vr-active) {
-            border-color: rgba(0,200,255,0.3);
-            background: var(--cyan-dim);
-            cursor: pointer;
-        }
-
-        .value-row.vr-active {
-            background: var(--gold-dim);
-            border-color: rgba(240,165,0,0.35);
-            box-shadow: 0 0 10px rgba(240,165,0,0.1);
-        }
-
-        .value-row.vr-sold {
-            background: rgba(0,201,122,0.06);
-            border-color: rgba(0,201,122,0.2);
-            opacity: 0.65;
-        }
-
-        .vr-name {
-            font-size: 0.83rem;
-            font-weight: 600;
-            color: var(--text);
-            flex: 1;
-        }
-
+        .value-row:hover:not(.vr-sold):not(.vr-active) { border-color: rgba(0,200,255,0.3); background: var(--cyan-dim); cursor: pointer; }
+        .value-row.vr-active { background: var(--gold-dim); border-color: rgba(240,165,0,0.35); box-shadow: 0 0 10px rgba(240,165,0,0.1); }
+        .value-row.vr-sold { background: rgba(0,201,122,0.06); border-color: rgba(0,201,122,0.2); opacity: 0.65; }
+        .vr-name { font-size: 0.83rem; font-weight: 600; color: var(--text); flex: 1; }
         .vr-active .vr-name { color: var(--gold); }
         .vr-sold .vr-name   { color: var(--text-dim); }
+        .vr-right { display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; }
+        .sold-tag { font-size: 0.7rem; font-weight: 700; background: var(--green-dim); color: var(--green); padding: 0.18rem 0.6rem; border-radius: 20px; border: 1px solid rgba(0,201,122,0.25); }
+        .active-tag { font-size: 0.73rem; color: var(--gold); font-weight: 700; display: flex; align-items: center; gap: 0.3rem; }
+        .active-tag::before { content: ''; display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: pulse-dot 1s infinite; }
 
-        .vr-right {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            white-space: nowrap;
-        }
-
-        .sold-tag {
-            font-size: 0.7rem;
-            font-weight: 700;
-            background: var(--green-dim);
-            color: var(--green);
-            padding: 0.18rem 0.6rem;
-            border-radius: 20px;
-            border: 1px solid rgba(0,201,122,0.25);
-        }
-
-        .active-tag {
-            font-size: 0.73rem;
-            color: var(--gold);
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-        }
-
-        .active-tag::before {
-            content: '';
-            display: block;
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: var(--gold);
-            animation: pulse-dot 1s infinite;
-        }
-
-        /* ─────────────── LOG PANEL ─────────────── */
-        .log-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .log-scroll {
-            overflow-y: auto;
-            flex: 1;
-        }
+        /* ── LOG ── */
+        .log-panel { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .log-scroll { overflow-y: auto; flex: 1; }
         .log-scroll::-webkit-scrollbar { width: 3px; }
         .log-scroll::-webkit-scrollbar-track { background: transparent; }
         .log-scroll::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
 
-        .log-entry {
-            padding: 0.55rem 0.7rem;
-            margin-bottom: 0.3rem;
-            border-radius: 8px;
-            font-size: 0.78rem;
-            border: 1px solid transparent;
-            line-height: 1.45;
-            animation: slide-in 0.25s ease-out;
-        }
+        .log-entry { padding: 0.55rem 0.7rem; margin-bottom: 0.3rem; border-radius: 8px; font-size: 0.78rem; border: 1px solid transparent; line-height: 1.45; animation: slide-in 0.25s ease-out; }
+        @keyframes slide-in { from{opacity:0;transform:translateX(8px)} to{opacity:1;transform:translateX(0)} }
+        .log-entry.bid  { background: var(--cyan-dim); border-color: rgba(0,200,255,0.15); color: var(--text); }
+        .log-entry.sold { background: var(--gold-dim); border-color: rgba(240,165,0,0.2); color: var(--gold); font-weight: 600; }
+        .log-entry.info { background: var(--bg3); border-color: var(--border); color: var(--text-dim); }
+        .log-time { font-size: 0.65rem; color: var(--text-muted); margin-bottom: 0.2rem; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
 
-        @keyframes slide-in {
-            from { opacity: 0; transform: translateX(8px); }
-            to   { opacity: 1; transform: translateX(0); }
-        }
-
-        .log-entry.bid {
-            background: var(--cyan-dim);
-            border-color: rgba(0,200,255,0.15);
-            color: var(--text);
-        }
-
-        .log-entry.sold {
-            background: var(--gold-dim);
-            border-color: rgba(240,165,0,0.2);
-            color: var(--gold);
-            font-weight: 600;
-        }
-
-        .log-entry.info {
-            background: var(--bg3);
-            border-color: var(--border);
-            color: var(--text-dim);
-        }
-
-        .log-time {
-            font-size: 0.65rem;
-            color: var(--text-muted);
-            margin-bottom: 0.2rem;
-            font-variant-numeric: tabular-nums;
-            letter-spacing: 0.04em;
-        }
-
-        /* ─────────────── MODALS ─────────────── */
+        /* ── MODALS ── */
         .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.75);
-            z-index: 200;
-            align-items: center;
-            justify-content: center;
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.75); z-index: 200;
+            align-items: center; justify-content: center;
             backdrop-filter: blur(6px);
         }
         .modal-overlay.open { display: flex; }
-
         .modal {
-            background: var(--bg2);
-            border: 1px solid var(--border2);
-            border-radius: var(--radius-lg);
-            padding: 2rem;
-            width: 92%;
-            max-height: 88vh;
-            overflow-y: auto;
+            background: var(--bg2); border: 1px solid var(--border2);
+            border-radius: var(--radius-lg); padding: 2rem;
+            width: 92%; max-height: 88vh; overflow-y: auto;
             box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 0 1px var(--border);
             animation: modal-in 0.2s ease-out;
         }
-
-        @keyframes modal-in {
-            from { opacity: 0; transform: scale(0.97) translateY(8px); }
-            to   { opacity: 1; transform: scale(1) translateY(0); }
-        }
-
+        @keyframes modal-in { from{opacity:0;transform:scale(0.97) translateY(8px)} to{opacity:1;transform:scale(1) translateY(0)} }
         .modal::-webkit-scrollbar { width: 4px; }
-        .modal::-webkit-scrollbar-track { background: transparent; }
         .modal::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
+        .modal h2 { font-size: 1.25rem; font-weight: 900; color: var(--text); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+        .modal h2 .modal-icon { font-size: 1.1rem; opacity: 0.7; }
 
-        .modal h2 {
-            font-size: 1.25rem;
-            font-weight: 900;
-            color: var(--text);
-            margin-bottom: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .modal h2 .modal-icon {
-            font-size: 1.1rem;
-            opacity: 0.7;
-        }
-
-        /* Summary modal */
+        /* Summary */
         #summaryModal .modal { max-width: 860px; }
-
         .summary-section-title {
-            font-size: 0.68rem;
-            font-weight: 700;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin: 1.5rem 0 0.75rem;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid var(--border2);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+            font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+            color: var(--text-muted); margin: 1.5rem 0 0.75rem; padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border2); display: flex; align-items: center; gap: 0.5rem;
         }
-        .summary-section-title::before {
-            content: '';
-            display: block;
-            width: 3px; height: 12px;
-            background: var(--gold);
-            border-radius: 2px;
-        }
+        .summary-section-title::before { content:''; display:block; width:3px; height:12px; background:var(--gold); border-radius:2px; }
+        .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+        .summary-card { background: var(--bg3); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem; }
+        .summary-card h3 { font-size: 0.82rem; color: var(--text); margin-bottom: 0.45rem; display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; font-weight: 700; }
+        .summary-card h3 .budget { color: var(--green); font-size: 0.76rem; white-space: nowrap; font-weight: 600; }
+        .bought-item { font-size: 0.76rem; color: var(--text-dim); padding: 0.2rem 0; border-bottom: 1px solid var(--border); }
+        .no-buy { color: var(--text-muted); font-style: italic; font-size: 0.76rem; }
+        .items-table { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
+        .items-table th { background: var(--bg3); padding: 0.6rem 0.85rem; text-align: right; font-weight: 700; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); border-bottom: 1px solid var(--border2); }
+        .items-table td { padding: 0.55rem 0.85rem; border-bottom: 1px solid var(--border); color: var(--text-dim); }
+        .items-table tr:hover td { background: var(--bg3); color: var(--text); }
+        .winner-cell { color: var(--green) !important; font-weight: 700; }
+        .pending-cell { color: var(--text-muted) !important; font-style: italic; }
+        .bid-count-badge { display: inline-flex; align-items: center; justify-content: center; background: var(--cyan-dim); color: var(--cyan); border: 1px solid rgba(0,200,255,0.2); border-radius: 20px; padding: 0.1rem 0.6rem; font-weight: 700; font-size: 0.75rem; min-width: 2rem; }
 
-        .summary-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.6rem;
-        }
-
-        .summary-card {
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 0.85rem;
-        }
-
-        .summary-card h3 {
-            font-size: 0.82rem;
-            color: var(--text);
-            margin-bottom: 0.45rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            gap: 0.5rem;
-            font-weight: 700;
-        }
-
-        .summary-card h3 .budget {
-            color: var(--green);
-            font-size: 0.76rem;
-            white-space: nowrap;
-            font-weight: 600;
-        }
-
-        .bought-item {
-            font-size: 0.76rem;
-            color: var(--text-dim);
-            padding: 0.2rem 0;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .no-buy {
-            color: var(--text-muted);
-            font-style: italic;
-            font-size: 0.76rem;
-        }
-
-        /* Items summary table */
-        .items-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.83rem;
-        }
-
-        .items-table th {
-            background: var(--bg3);
-            padding: 0.6rem 0.85rem;
-            text-align: right;
-            font-weight: 700;
-            font-size: 0.68rem;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            border-bottom: 1px solid var(--border2);
-        }
-
-        .items-table td {
-            padding: 0.55rem 0.85rem;
-            border-bottom: 1px solid var(--border);
-            color: var(--text-dim);
-        }
-
-        .items-table tr:hover td {
-            background: var(--bg3);
-            color: var(--text);
-        }
-
-        .winner-cell {
-            color: var(--green) !important;
-            font-weight: 700;
-        }
-
-        .pending-cell {
-            color: var(--text-muted) !important;
-            font-style: italic;
-        }
-
-        .bid-count-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--cyan-dim);
-            color: var(--cyan);
-            border: 1px solid rgba(0,200,255,0.2);
-            border-radius: 20px;
-            padding: 0.1rem 0.6rem;
-            font-weight: 700;
-            font-size: 0.75rem;
-            min-width: 2rem;
-        }
-
-        /* Edit Students modal */
+        /* Edit Students */
         #editStudentsModal .modal { max-width: 500px; }
+        #editStudentsModal textarea { width: 100%; height: 280px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; padding: 0.85rem; font-size: 0.85rem; font-family: inherit; color: var(--text); resize: vertical; outline: none; direction: rtl; line-height: 1.75; transition: border-color 0.2s; }
+        #editStudentsModal textarea:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px var(--cyan-dim); }
+        .edit-note { font-size: 0.76rem; color: var(--text-muted); margin-bottom: 0.75rem; line-height: 1.5; padding: 0.6rem 0.85rem; background: var(--bg3); border-radius: 8px; border: 1px solid var(--border); }
+        .modal-footer { display: flex; gap: 0.6rem; margin-top: 1.25rem; justify-content: flex-end; }
 
-        #editStudentsModal textarea {
-            width: 100%;
-            height: 280px;
-            background: var(--bg3);
-            border: 1px solid var(--border2);
-            border-radius: 8px;
-            padding: 0.85rem;
-            font-size: 0.85rem;
-            font-family: inherit;
-            color: var(--text);
-            resize: vertical;
-            outline: none;
-            direction: rtl;
-            line-height: 1.75;
-            transition: border-color 0.2s;
-        }
-
-        #editStudentsModal textarea:focus {
-            border-color: var(--cyan);
-            box-shadow: 0 0 0 3px var(--cyan-dim);
-        }
-
-        .edit-note {
-            font-size: 0.76rem;
-            color: var(--text-muted);
-            margin-bottom: 0.75rem;
-            line-height: 1.5;
-            padding: 0.6rem 0.85rem;
-            background: var(--bg3);
-            border-radius: 8px;
-            border: 1px solid var(--border);
-        }
-
-        .modal-footer {
-            display: flex;
-            gap: 0.6rem;
-            margin-top: 1.25rem;
-            justify-content: flex-end;
-        }
-
-        /* Edit Values modal */
+        /* Edit Values */
         #editValuesModal .modal { max-width: 700px; }
-
-        .value-edit-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            max-height: 52vh;
-            overflow-y: auto;
-            padding-left: 2px;
-        }
+        .value-edit-list { display: flex; flex-direction: column; gap: 0.5rem; max-height: 52vh; overflow-y: auto; padding-left: 2px; }
         .value-edit-list::-webkit-scrollbar { width: 3px; }
         .value-edit-list::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 2px; }
-
-        .value-edit-row {
-            display: grid;
-            grid-template-columns: 1fr 2fr auto;
-            gap: 0.5rem;
-            align-items: start;
-            background: var(--bg3);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 0.65rem;
-            transition: border-color 0.2s;
-        }
+        .value-edit-row { display: grid; grid-template-columns: 1fr 2fr auto; gap: 0.5rem; align-items: start; background: var(--bg3); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem; transition: border-color 0.2s; }
         .value-edit-row:hover { border-color: var(--border2); }
-
         .value-edit-row input[type="text"],
-        .value-edit-row textarea {
-            width: 100%;
-            background: var(--bg2);
-            border: 1px solid var(--border2);
-            border-radius: 7px;
-            padding: 0.45rem 0.65rem;
-            font-size: 0.83rem;
-            font-family: inherit;
-            color: var(--text);
-            outline: none;
-            direction: rtl;
-            transition: border-color 0.2s;
-        }
-
+        .value-edit-row textarea { width: 100%; background: var(--bg2); border: 1px solid var(--border2); border-radius: 7px; padding: 0.45rem 0.65rem; font-size: 0.83rem; font-family: inherit; color: var(--text); outline: none; direction: rtl; transition: border-color 0.2s; }
         .value-edit-row input[type="text"]:focus,
-        .value-edit-row textarea:focus {
-            border-color: var(--cyan);
-            box-shadow: 0 0 0 2px var(--cyan-dim);
-        }
-
-        .value-edit-row textarea {
-            resize: vertical;
-            min-height: 56px;
-            line-height: 1.5;
-            font-size: 0.79rem;
-        }
-
-        .btn-delete-row {
-            background: none;
-            border: 1px solid transparent;
-            color: var(--text-muted);
-            font-size: 1rem;
-            cursor: pointer;
-            padding: 0.3rem 0.45rem;
-            border-radius: 6px;
-            line-height: 1;
-            transition: all 0.15s;
-            margin-top: 2px;
-        }
-
-        .btn-delete-row:hover:not(:disabled) {
-            color: var(--red);
-            background: var(--red-dim);
-            border-color: rgba(255,64,64,0.25);
-        }
-
+        .value-edit-row textarea:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px var(--cyan-dim); }
+        .value-edit-row textarea { resize: vertical; min-height: 56px; line-height: 1.5; font-size: 0.79rem; }
+        .btn-delete-row { background: none; border: 1px solid transparent; color: var(--text-muted); font-size: 1rem; cursor: pointer; padding: 0.3rem 0.45rem; border-radius: 6px; line-height: 1; transition: all 0.15s; margin-top: 2px; }
+        .btn-delete-row:hover:not(:disabled) { color: var(--red); background: var(--red-dim); border-color: rgba(255,64,64,0.25); }
         .btn-delete-row:disabled { opacity: 0.25; cursor: not-allowed; }
+        .add-value-btn { width: 100%; margin-top: 0.6rem; padding: 0.6rem; border: 1px dashed var(--border2); border-radius: 8px; background: none; color: var(--text-muted); font-size: 0.83rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s; }
+        .add-value-btn:hover { border-color: var(--cyan); color: var(--cyan); background: var(--cyan-dim); }
 
-        .add-value-btn {
-            width: 100%;
-            margin-top: 0.6rem;
-            padding: 0.6rem;
-            border: 1px dashed var(--border2);
-            border-radius: 8px;
-            background: none;
-            color: var(--text-muted);
-            font-size: 0.83rem;
-            font-weight: 600;
-            cursor: pointer;
-            font-family: inherit;
-            transition: all 0.2s;
+        /* ── REMOTE SESSION MODAL ── */
+        #remoteModal .modal { max-width: 440px; }
+        .session-code-block {
+            background: var(--bg3); border: 1px solid rgba(240,165,0,0.3);
+            border-radius: 12px; padding: 1.25rem; text-align: center; margin-bottom: 1rem;
+        }
+        .session-code-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem; }
+        .session-code { font-size: 2.2rem; font-weight: 900; letter-spacing: 0.25em; color: var(--gold); font-variant-numeric: tabular-nums; }
+        .qr-wrap { display: flex; justify-content: center; margin: 0.75rem 0; }
+        .qr-wrap img { border-radius: 10px; border: 4px solid white; width: 160px; height: 160px; }
+        .session-link-box {
+            display: flex; gap: 0.5rem; align-items: center;
+            background: var(--bg3); border: 1px solid var(--border2);
+            border-radius: 8px; padding: 0.6rem 0.85rem; margin-bottom: 1rem;
+        }
+        .session-link-text { flex: 1; font-size: 0.72rem; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: ltr; text-align: left; }
+        .copy-btn { background: var(--bg4); border: 1px solid var(--border2); color: var(--text-dim); border-radius: 6px; padding: 0.3rem 0.65rem; font-size: 0.75rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.15s; white-space: nowrap; }
+        .copy-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+        .copy-btn.copied { border-color: var(--green); color: var(--green); }
+        .joined-count { text-align: center; padding: 0.6rem; background: var(--bg3); border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1rem; }
+        .joined-count .num { font-size: 1.5rem; font-weight: 900; color: var(--green); display: block; }
+        .joined-count .lbl { font-size: 0.7rem; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; }
+        .remote-modal-footer { display: flex; gap: 0.6rem; margin-top: 0.5rem; }
+
+        /* ── STUDENT APP ── */
+        #studentApp {
+            position: relative; z-index: 1;
+            min-height: 100vh; display: none;
+            flex-direction: column; align-items: center;
+            background: var(--bg); padding-bottom: 2rem;
         }
 
-        .add-value-btn:hover {
-            border-color: var(--cyan);
-            color: var(--cyan);
-            background: var(--cyan-dim);
+        .s-header {
+            width: 100%; background: var(--bg2); border-bottom: 1px solid var(--border2);
+            padding: 0.85rem 1.25rem;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 5;
         }
+        .s-header-left h2 { font-size: 1rem; font-weight: 900; color: var(--text); }
+        .s-header-left .s-session-tag { font-size: 0.65rem; color: var(--text-muted); letter-spacing: 0.08em; }
+        .s-header-budget { font-size: 1.1rem; font-weight: 900; color: var(--green); }
+        .s-header-budget.low { color: var(--red); }
+        .s-header-budget-label { font-size: 0.65rem; color: var(--text-muted); text-align: left; letter-spacing: 0.06em; text-transform: uppercase; }
 
-        /* ─────────────── DIVIDER ─────────────── */
-        .col-divider {
-            width: 1px;
-            background: var(--border);
-            align-self: stretch;
-            display: none;
+        .s-body { width: 100%; max-width: 480px; padding: 1.25rem 1rem; }
+
+        /* Join screen */
+        .s-join-card {
+            background: var(--bg2); border: 1px solid var(--border2);
+            border-radius: var(--radius-lg); padding: 2.5rem 2rem; text-align: center;
         }
+        .s-join-icon { font-size: 3rem; margin-bottom: 0.75rem; display: block; filter: drop-shadow(0 0 12px var(--gold)); }
+        .s-join-card h2 { font-size: 1.5rem; font-weight: 900; margin-bottom: 0.3rem; }
+        .s-join-card .s-join-sub { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1.5rem; }
+        .s-name-select { width: 100%; margin-bottom: 0.75rem; font-size: 0.95rem; padding: 0.75rem 1rem; }
+        .s-join-err { color: var(--red); font-size: 0.8rem; min-height: 1.2em; margin-bottom: 0.5rem; }
+        .s-join-btn { width: 100%; padding: 0.85rem; font-size: 1rem; }
+
+        /* Waiting */
+        .s-waiting {
+            background: var(--bg2); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); padding: 3rem 2rem; text-align: center;
+        }
+        .s-waiting-icon { font-size: 3rem; display: block; margin-bottom: 1rem; }
+        .s-waiting h3 { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 0.4rem; }
+        .s-waiting p { font-size: 0.85rem; color: var(--text-dim); }
+
+        /* Live auction card */
+        .s-live-card {
+            background: var(--bg2); border: 1px solid rgba(240,165,0,0.35);
+            border-radius: var(--radius-lg); padding: 1.5rem;
+            box-shadow: 0 0 30px rgba(240,165,0,0.08);
+            position: relative; overflow: hidden;
+        }
+        .s-live-card::after {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, transparent, var(--gold), transparent);
+            animation: scan 2.5s ease-in-out infinite;
+        }
+        .s-live-badge {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            background: rgba(240,165,0,0.15); color: var(--gold);
+            border: 1px solid rgba(240,165,0,0.3); border-radius: 20px;
+            padding: 0.2rem 0.75rem; font-size: 0.7rem; font-weight: 700;
+            letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 1rem;
+        }
+        .s-live-badge::before { content: ''; display: block; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: pulse-dot 1.2s infinite; }
+        .s-value-name { font-size: 1.5rem; font-weight: 900; color: var(--gold); margin-bottom: 0.4rem; line-height: 1.2; }
+        .s-value-desc { font-size: 0.83rem; color: var(--text-dim); line-height: 1.6; margin-bottom: 1.25rem; }
+        .s-bid-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1.25rem; }
+        .s-stat-box { background: var(--bg3); border: 1px solid rgba(240,165,0,0.12); border-radius: 10px; padding: 0.75rem; text-align: center; }
+        .s-stat-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.3rem; }
+        .s-stat-value { font-size: 1.3rem; font-weight: 900; color: var(--gold); font-variant-numeric: tabular-nums; }
+        .s-stat-bidder { font-size: 0.9rem; font-weight: 700; color: var(--text); }
+        .s-leading-banner { background: var(--cyan-dim); border: 1px solid rgba(0,200,255,0.3); border-radius: 8px; padding: 0.75rem 1rem; text-align: center; color: var(--cyan); font-weight: 700; font-size: 0.9rem; margin-bottom: 1rem; }
+        .s-bid-form { display: flex; gap: 0.5rem; }
+        .s-bid-input { flex: 1; padding: 0.75rem 1rem; font-size: 1rem; }
+        .s-bid-submit { padding: 0.75rem 1.25rem; font-size: 0.9rem; }
+        .s-bid-err { color: var(--red); font-size: 0.78rem; margin-top: 0.5rem; min-height: 1.2em; }
+        .s-budget-note { font-size: 0.72rem; color: var(--text-muted); margin-top: 0.75rem; text-align: center; }
+
+        /* Bought items footer */
+        .s-bought-section { margin-top: 1.25rem; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem; }
+        .s-bought-title { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.6rem; }
+        .s-bought-item { font-size: 0.8rem; color: var(--text-dim); padding: 0.3rem 0; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; }
+        .s-bought-item:last-child { border-bottom: none; }
+        .s-bought-price { color: var(--green); font-weight: 700; }
+
+        /* Connection states */
+        .s-connecting { text-align: center; padding: 3rem; color: var(--text-muted); }
+        .s-error-screen { text-align: center; padding: 3rem; }
+        .s-error-screen h3 { color: var(--red); margin-bottom: 0.5rem; }
+        .s-error-screen p { color: var(--text-muted); font-size: 0.85rem; }
     </style>
 </head>
 <body>
+
+<!-- ══════════════ TEACHER APP ══════════════ -->
+<div id="teacherApp">
 
 <header>
     <div class="header-logo">
@@ -1041,17 +491,17 @@
             <div class="header-sub">כל תלמיד מתחיל עם 1,000 ₪ וירטואליים</div>
         </div>
     </div>
-
     <div class="header-actions">
         <button class="hbtn" onclick="openEditStudents()">👥 עריכת משתתפים</button>
         <button class="hbtn" onclick="openEditValues()">📋 עריכת ערכים</button>
+        <button class="hbtn" id="remoteBtn" onclick="openRemoteModal()">🌐 מפגש מרחוק</button>
         <button class="hbtn summary" onclick="showSummary()">📊 סיכום</button>
     </div>
 </header>
 
 <div class="main-grid">
 
-    <!-- ══ Students ══ -->
+    <!-- Students -->
     <div class="panel students-panel">
         <div class="panel-title">תלמידים</div>
         <div class="students-scroll">
@@ -1059,16 +509,12 @@
         </div>
     </div>
 
-    <!-- ══ Center ══ -->
+    <!-- Center -->
     <div class="auction-area">
-
-        <!-- Active auction card -->
         <div class="panel auction-card" id="auctionCard">
             <span class="status-badge badge-wait" id="statusBadge">ממתין למכירה</span>
-
             <div class="value-name" id="aValueName">בחר ערך לפתיחת מכירה</div>
             <div class="value-desc" id="aValueDesc">לחץ על "פתח מכירה" ליד אחד הערכים למטה כדי להתחיל.</div>
-
             <div class="bid-stats">
                 <div class="stat-box">
                     <div class="stat-label">הצעה גבוהה</div>
@@ -1079,13 +525,10 @@
                     <div class="stat-value" id="sCurBidder" style="font-size:1.05rem">—</div>
                 </div>
             </div>
-
             <div class="bid-controls">
                 <div class="form-group">
                     <label>תלמיד מציע</label>
-                    <select id="bidderSelect" disabled>
-                        <option value="">— בחר תלמיד —</option>
-                    </select>
+                    <select id="bidderSelect" disabled><option value="">— בחר תלמיד —</option></select>
                 </div>
                 <div class="form-group">
                     <label>סכום ₪</label>
@@ -1096,13 +539,8 @@
                     <button class="btn btn-primary" id="placeBidBtn" disabled onclick="placeBid()">📤 הגש הצעה</button>
                 </div>
             </div>
-
             <div class="error-msg" id="bidError"></div>
-
-            <button class="btn btn-success" id="closeAuctionBtn" disabled onclick="closeAuction()">
-                🔨 מכור לגבוה ביותר!
-            </button>
-
+            <button class="btn btn-success" id="closeAuctionBtn" disabled onclick="closeAuction()">🔨 מכור לגבוה ביותר!</button>
             <div class="teacher-controls" style="margin-top:0.6rem">
                 <button class="btn btn-danger btn-sm" id="cancelAuctionBtn" disabled onclick="cancelAuction()">✕ בטל מכירה</button>
             </div>
@@ -1117,7 +555,7 @@
         </div>
     </div>
 
-    <!-- ══ Values list ══ -->
+    <!-- Values list -->
     <div class="panel values-panel">
         <div class="panel-title">רשימת הערכים</div>
         <div class="values-scroll">
@@ -1125,6 +563,77 @@
         </div>
     </div>
 
+</div>
+
+</div><!-- /teacherApp -->
+
+<!-- ══════════════ STUDENT APP ══════════════ -->
+<div id="studentApp">
+
+    <div class="s-header">
+        <div class="s-header-left">
+            <h2 id="sHeaderName">מכירה פומבית</h2>
+            <div class="s-session-tag" id="sSessionTag"></div>
+        </div>
+        <div style="text-align:left">
+            <div class="s-header-budget" id="sHeaderBudget"></div>
+            <div class="s-header-budget-label" id="sHeaderBudgetLabel"></div>
+        </div>
+    </div>
+
+    <div class="s-body" id="sBody">
+        <!-- Join screen shown by default -->
+        <div class="s-join-card" id="sJoinScreen">
+            <span class="s-join-icon">🏛️</span>
+            <h2>מכירה פומבית של ערכים</h2>
+            <p class="s-join-sub">בחר את שמך כדי להצטרף למפגש</p>
+            <select id="studentNameSelect" class="s-name-select">
+                <option value="">טוען רשימת תלמידים...</option>
+            </select>
+            <div id="sJoinErr" class="s-join-err"></div>
+            <button class="btn btn-primary s-join-btn" onclick="joinAsStudent()">הצטרף למכירה ←</button>
+        </div>
+    </div>
+
+</div><!-- /studentApp -->
+
+<!-- ══ Remote Session Modal ══ -->
+<div class="modal-overlay" id="remoteModal">
+    <div class="modal">
+        <h2><span class="modal-icon">🌐</span> מפגש מרחוק</h2>
+
+        <!-- Pre-start state -->
+        <div id="remotePreStart">
+            <p class="edit-note">תלמידים יקבלו קישור, יבחרו את שמם ויוכלו להציע הצעות מהטלפון שלהם.</p>
+            <div class="modal-footer">
+                <button class="btn btn-gray" onclick="closeRemoteModal()">ביטול</button>
+                <button class="btn btn-primary" onclick="startRemoteSession()">🚀 פתח מפגש</button>
+            </div>
+        </div>
+
+        <!-- Active session state -->
+        <div id="remoteActive" style="display:none">
+            <div class="joined-count">
+                <span class="num" id="joinedCountNum">0</span>
+                <span class="lbl">תלמידים הצטרפו</span>
+            </div>
+            <div class="session-code-block">
+                <div class="session-code-label">קוד הסשן</div>
+                <div class="session-code" id="remoteSessionCode">——</div>
+            </div>
+            <div class="qr-wrap">
+                <img id="remoteQr" src="" alt="QR Code">
+            </div>
+            <div class="session-link-box">
+                <span class="session-link-text" id="remoteLinkText"></span>
+                <button class="copy-btn" id="copyBtn" onclick="copyStudentLink()">העתק</button>
+            </div>
+            <div class="remote-modal-footer">
+                <button class="btn btn-gray" onclick="closeRemoteModal()">סגור</button>
+                <button class="btn btn-danger" onclick="endRemoteSession()">סיים מפגש</button>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- ══ Edit Students Modal ══ -->
@@ -1158,29 +667,39 @@
 <div class="modal-overlay" id="summaryModal">
     <div class="modal">
         <h2><span class="modal-icon">📊</span> סיכום המכירה הפומבית</h2>
-
         <div class="summary-section-title">סיכום לפי ערכים</div>
         <table class="items-table" id="itemsSummaryTable">
-            <thead>
-                <tr>
-                    <th>ערך</th>
-                    <th>מספר הצעות</th>
-                    <th>הצעה זוכה</th>
-                    <th>זוכה</th>
-                </tr>
-            </thead>
+            <thead><tr><th>ערך</th><th>מספר הצעות</th><th>הצעה זוכה</th><th>זוכה</th></tr></thead>
             <tbody id="itemsSummaryBody"></tbody>
         </table>
-
         <div class="summary-section-title">סיכום לפי תלמידים</div>
         <div class="summary-grid" id="summaryContent"></div>
-
         <br>
         <button class="btn btn-primary" onclick="closeSummary()" style="width:100%">סגור</button>
     </div>
 </div>
 
 <script>
+// ══════════════════════════════════════
+//  FIREBASE
+// ══════════════════════════════════════
+const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyDMwQXeiDibuy6q0q_emHGAmxB3xSqRVbU",
+    authDomain: "values-auction-ed09c.firebaseapp.com",
+    databaseURL: "https://values-auction-ed09c-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "values-auction-ed09c",
+    storageBucket: "values-auction-ed09c.firebasestorage.app",
+    messagingSenderId: "157059499738",
+    appId: "1:157059499738:web:c1c20c62219f91168b87e3"
+};
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.database();
+
+// ── URL params ──
+const _params     = new URLSearchParams(window.location.search);
+const SESSION_PARAM = _params.get('session');
+const IS_STUDENT    = _params.get('role') === 'student';
+
 // ══════════════════════════════════════
 //  DEFAULT DATA
 // ══════════════════════════════════════
@@ -1218,7 +737,11 @@ const VALUES_RAW = [
 // ══════════════════════════════════════
 let students = DEFAULT_STUDENTS.map(name => ({ name, budget: 1000, bought: [] }));
 let values   = VALUES_RAW.map((v, i) => ({ ...v, id: i, status: 'pending', winner: null, finalPrice: null, bidCount: 0 }));
-let auction  = null; // { valueId, currentBid, currentBidderId }
+let auction  = null;
+
+// Remote session state
+let sessionId  = null;
+let sessionRef = null;
 
 // ══════════════════════════════════════
 //  HELPERS
@@ -1237,7 +760,7 @@ function addLog(msg, type = 'info') {
 function clearErr() { document.getElementById('bidError').textContent = ''; }
 
 // ══════════════════════════════════════
-//  RENDER
+//  RENDER (teacher)
 // ══════════════════════════════════════
 function renderStudents() {
     const list   = document.getElementById('studentsList');
@@ -1253,8 +776,7 @@ function renderStudents() {
 
         const div = document.createElement('div');
         div.className = 'student-item' + (leading ? ' leading' : '');
-        div.innerHTML = `
-            <span class="student-name">${s.name}</span>
+        div.innerHTML = `<span class="student-name">${s.name}</span>
             <span class="student-budget${lowBudget ? ' low' : ''}">${fmt(s.budget)}</span>`;
         list.appendChild(div);
 
@@ -1321,16 +843,19 @@ function renderCard() {
         badge.textContent  = 'מכירה פעילה';
         namEl.textContent  = v.name;
         descEl.textContent = v.desc;
-
         curBid.textContent    = auction.currentBid > 0 ? fmt(auction.currentBid) : 'פתיחה';
         curBidder.textContent = auction.currentBidderId !== null ? students[auction.currentBidderId].name : '—';
-
         [bidBtn, cancelBtn, sel, amtIn].forEach(el => el.disabled = false);
         closeBtn.disabled = auction.currentBid === 0;
     }
 }
 
-function renderAll() { renderStudents(); renderValues(); renderCard(); }
+function renderAll() {
+    renderStudents();
+    renderValues();
+    renderCard();
+    if (sessionRef) syncStateToFirebase();
+}
 
 // ══════════════════════════════════════
 //  AUCTION ACTIONS
@@ -1346,32 +871,18 @@ function startAuction(valueId) {
 function placeBid() {
     clearErr();
     if (!auction) return;
-
     const err    = document.getElementById('bidError');
     const selVal = document.getElementById('bidderSelect').value;
     const amount = parseInt(document.getElementById('bidAmount').value);
-
     if (selVal === '') { err.textContent = 'יש לבחור תלמיד.'; return; }
     const idx = parseInt(selVal);
-
-    if (auction.currentBidderId === idx) {
-        err.textContent = `${students[idx].name} כבר מוביל — לא ניתן להגיש הצעה נגד עצמך.`;
-        return;
-    }
+    if (auction.currentBidderId === idx) { err.textContent = `${students[idx].name} כבר מוביל — לא ניתן להגיש הצעה נגד עצמך.`; return; }
     if (isNaN(amount) || amount <= 0) { err.textContent = 'יש להזין סכום תקין.'; return; }
-    if (amount <= auction.currentBid) {
-        err.textContent = `הסכום חייב להיות מעל ההצעה הנוכחית (${fmt(auction.currentBid)}).`;
-        return;
-    }
-    if (amount > students[idx].budget) {
-        err.textContent = `${students[idx].name} אין מספיק כסף (יתרה: ${fmt(students[idx].budget)}).`;
-        return;
-    }
-
+    if (amount <= auction.currentBid) { err.textContent = `הסכום חייב להיות מעל ההצעה הנוכחית (${fmt(auction.currentBid)}).`; return; }
+    if (amount > students[idx].budget) { err.textContent = `${students[idx].name} אין מספיק כסף (יתרה: ${fmt(students[idx].budget)}).`; return; }
     auction.currentBid      = amount;
     auction.currentBidderId = idx;
     values[auction.valueId].bidCount++;
-
     addLog(`💰 <strong>${students[idx].name}</strong> הציע ${fmt(amount)} על <strong>${values[auction.valueId].name}</strong>`, 'bid');
     document.getElementById('bidAmount').value = '';
     renderAll();
@@ -1379,19 +890,15 @@ function placeBid() {
 
 function closeAuction() {
     if (!auction || auction.currentBid === 0) return;
-
     const v     = values[auction.valueId];
     const idx   = auction.currentBidderId;
     const price = auction.currentBid;
-
     students[idx].budget -= price;
     students[idx].bought.push({ name: v.name, price });
     v.status     = 'sold';
     v.winner     = students[idx].name;
     v.finalPrice = price;
-
     addLog(`🎉 <strong>${v.name}</strong> נמכר ל-<strong>${students[idx].name}</strong> ב-${fmt(price)}!`, 'sold');
-
     auction = null;
     document.getElementById('bidAmount').value = '';
     clearErr();
@@ -1416,28 +923,19 @@ function openEditStudents() {
     document.getElementById('studentsTextarea').value = students.map(s => s.name).join('\n');
     document.getElementById('editStudentsModal').classList.add('open');
 }
-
-function closeEditStudents() {
-    document.getElementById('editStudentsModal').classList.remove('open');
-}
+function closeEditStudents() { document.getElementById('editStudentsModal').classList.remove('open'); }
 
 function applyStudents() {
     const names = document.getElementById('studentsTextarea').value
-        .split('\n')
-        .map(s => s.trim())
-        .filter(s => s.length > 0);
-
+        .split('\n').map(s => s.trim()).filter(s => s.length > 0);
     if (names.length === 0) { alert('יש להכניס לפחות תלמיד אחד.'); return; }
-
     const hasSales = values.some(v => v.status === 'sold');
     if (hasSales) {
         if (!confirm('שינוי הרשימה יאפס את כל הרכישות והתקציבים. להמשיך?')) return;
-        // Reset values too
         values.forEach(v => { v.status = 'pending'; v.winner = null; v.finalPrice = null; v.bidCount = 0; });
         auction = null;
         document.getElementById('activityLog').innerHTML = '';
     }
-
     students = names.map(name => ({ name, budget: 1000, bought: [] }));
     closeEditStudents();
     addLog(`✏️ רשימת המשתתפים עודכנה — ${names.length} תלמידים.`, 'info');
@@ -1450,24 +948,17 @@ function applyStudents() {
 function openEditValues() {
     const list = document.getElementById('valueEditList');
     list.innerHTML = '';
-    values.forEach((v, i) => addValueRow(v.name, v.desc, v.status));
+    values.forEach((v) => addValueRow(v.name, v.desc, v.status));
     document.getElementById('editValuesModal').classList.add('open');
 }
-
-function closeEditValues() {
-    document.getElementById('editValuesModal').classList.remove('open');
-}
+function closeEditValues() { document.getElementById('editValuesModal').classList.remove('open'); }
 
 function addValueRow(name = '', desc = '', status = 'pending') {
     const list = document.getElementById('valueEditList');
     const row  = document.createElement('div');
     row.className = 'value-edit-row';
-
     const isSoldOrActive = status === 'sold' || status === 'active';
-    const lockNote = isSoldOrActive
-        ? `<small style="color:var(--red);font-size:0.7rem">${status === 'sold' ? 'נמכר' : 'פעיל'}</small>`
-        : '';
-
+    const lockNote = isSoldOrActive ? `<small style="color:var(--red);font-size:0.7rem">${status === 'sold' ? 'נמכר' : 'פעיל'}</small>` : '';
     row.innerHTML = `
         <div>
             <input type="text" placeholder="שם הערך *" value="${name.replace(/"/g,'&quot;')}"
@@ -1482,54 +973,33 @@ function addValueRow(name = '', desc = '', status = 'pending') {
     list.appendChild(row);
 }
 
-function removeValueRow(btn) {
-    btn.closest('.value-edit-row').remove();
-}
+function removeValueRow(btn) { btn.closest('.value-edit-row').remove(); }
 
 function applyValues() {
     const rows = document.querySelectorAll('.value-edit-row');
     const newValues = [];
-
     for (const row of rows) {
         const nameInput = row.querySelector('input[type="text"]');
         const descInput = row.querySelector('textarea');
         const name = nameInput.value.trim();
         const desc = descInput.value.trim();
-
-        if (!name) {
-            nameInput.style.borderColor = 'var(--red)';
-            nameInput.focus();
-            return;
-        }
+        if (!name) { nameInput.style.borderColor = 'var(--red)'; nameInput.focus(); return; }
         nameInput.style.borderColor = '';
         newValues.push({ name, desc });
     }
-
     if (newValues.length === 0) { alert('יש להכניס לפחות ערך אחד.'); return; }
-
-    // Preserve status/bidCount/winner/finalPrice for existing values by name
     const statusMap = {};
     values.forEach(v => { statusMap[v.name] = v; });
-
     let nextId = 0;
     values = newValues.map(nv => {
         const existing = statusMap[nv.name];
-        return {
-            id:         nextId++,
-            name:       nv.name,
-            desc:       nv.desc,
+        return { id: nextId++, name: nv.name, desc: nv.desc,
             status:     existing ? existing.status     : 'pending',
             winner:     existing ? existing.winner     : null,
             finalPrice: existing ? existing.finalPrice : null,
-            bidCount:   existing ? existing.bidCount   : 0
-        };
+            bidCount:   existing ? existing.bidCount   : 0 };
     });
-
-    // If active auction's value was removed, cancel it
-    if (auction && !values.find(v => v.id === auction.valueId)) {
-        auction = null;
-    }
-
+    if (auction && !values.find(v => v.id === auction.valueId)) auction = null;
     closeEditValues();
     addLog(`📋 רשימת הערכים עודכנה — ${values.length} ערכים.`, 'info');
     renderAll();
@@ -1539,13 +1009,11 @@ function applyValues() {
 //  SUMMARY
 // ══════════════════════════════════════
 function showSummary() {
-    // Items table
     const tbody = document.getElementById('itemsSummaryBody');
     tbody.innerHTML = '';
     values.forEach(v => {
         const tr = document.createElement('tr');
         let winnerCell, priceCell;
-
         if (v.status === 'sold') {
             priceCell  = `<td class="winner-cell">${fmt(v.finalPrice)}</td>`;
             winnerCell = `<td class="winner-cell">🏆 ${v.winner}</td>`;
@@ -1556,17 +1024,9 @@ function showSummary() {
             priceCell  = `<td class="pending-cell">—</td>`;
             winnerCell = `<td class="pending-cell">לא נמכר</td>`;
         }
-
-        const bidCount = v.bidCount + (v.status === 'active' && auction && auction.currentBid > 0 ? 0 : 0);
-        tr.innerHTML = `
-            <td>${v.name}</td>
-            <td><span class="bid-count-badge">${v.bidCount}</span></td>
-            ${priceCell}
-            ${winnerCell}`;
+        tr.innerHTML = `<td>${v.name}</td><td><span class="bid-count-badge">${v.bidCount}</span></td>${priceCell}${winnerCell}`;
         tbody.appendChild(tr);
     });
-
-    // Students grid
     const content = document.getElementById('summaryContent');
     content.innerHTML = '';
     students.forEach(s => {
@@ -1578,19 +1038,318 @@ function showSummary() {
         card.innerHTML = `<h3>${s.name}<span class="budget">${fmt(s.budget)} נותר</span></h3>${items}`;
         content.appendChild(card);
     });
-
     document.getElementById('summaryModal').classList.add('open');
 }
+function closeSummary() { document.getElementById('summaryModal').classList.remove('open'); }
 
-function closeSummary() {
-    document.getElementById('summaryModal').classList.remove('open');
+// ══════════════════════════════════════
+//  REMOTE SESSION — TEACHER
+// ══════════════════════════════════════
+function generateSessionId() {
+    return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
+function openRemoteModal() {
+    if (sessionId) {
+        document.getElementById('remotePreStart').style.display = 'none';
+        document.getElementById('remoteActive').style.display = 'block';
+    } else {
+        document.getElementById('remotePreStart').style.display = 'block';
+        document.getElementById('remoteActive').style.display = 'none';
+    }
+    document.getElementById('remoteModal').classList.add('open');
+}
+
+function closeRemoteModal() {
+    document.getElementById('remoteModal').classList.remove('open');
+}
+
+function startRemoteSession() {
+    sessionId  = generateSessionId();
+    sessionRef = db.ref('sessions/' + sessionId);
+
+    // Mark active + write initial state
+    sessionRef.child('active').set(true);
+    syncStateToFirebase();
+
+    // Listen for student bids
+    sessionRef.child('pendingBid').on('value', snap => {
+        const bid = snap.val();
+        if (!bid) return;
+        applyStudentBid(bid);
+    });
+
+    // Listen for joined count
+    sessionRef.child('joined').on('value', snap => {
+        const joined = snap.val() || {};
+        document.getElementById('joinedCountNum').textContent = Object.keys(joined).length;
+    });
+
+    // Update URL so teacher can reload and rejoin
+    history.pushState({}, '', '?session=' + sessionId);
+
+    // Update button
+    document.getElementById('remoteBtn').className = 'hbtn remote-active';
+    document.getElementById('remoteBtn').textContent = '🟢 מפגש פעיל';
+
+    // Show active state in modal
+    const studentLink = getStudentLink();
+    document.getElementById('remoteSessionCode').textContent = sessionId;
+    document.getElementById('remoteLinkText').textContent = studentLink;
+    document.getElementById('remoteQr').src =
+        'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + encodeURIComponent(studentLink);
+
+    document.getElementById('remotePreStart').style.display = 'none';
+    document.getElementById('remoteActive').style.display = 'block';
+}
+
+function endRemoteSession() {
+    if (!confirm('לסיים את המפגש המרחוק? התלמידים לא יוכלו להמשיך להציע.')) return;
+    if (sessionRef) {
+        sessionRef.child('active').set(false);
+        sessionRef.off();
+        sessionRef = null;
+    }
+    sessionId = null;
+    history.pushState({}, '', location.pathname);
+    document.getElementById('remoteBtn').className = 'hbtn';
+    document.getElementById('remoteBtn').textContent = '🌐 מפגש מרחוק';
+    closeRemoteModal();
+    addLog('🔴 המפגש המרחוק הסתיים.', 'info');
+}
+
+function syncStateToFirebase() {
+    if (!sessionRef) return;
+    sessionRef.child('state').set({ students, values, auction });
+}
+
+function getStudentLink() {
+    return location.origin + location.pathname + '?session=' + sessionId + '&role=student';
+}
+
+function copyStudentLink() {
+    navigator.clipboard.writeText(getStudentLink()).then(() => {
+        const btn = document.getElementById('copyBtn');
+        btn.textContent = '✔ הועתק';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'העתק'; btn.classList.remove('copied'); }, 2000);
+    });
+}
+
+function applyStudentBid({ studentIdx, amount }) {
+    if (!auction) return;
+    const idx = parseInt(studentIdx);
+    if (isNaN(idx) || idx < 0 || idx >= students.length) return;
+    if (auction.currentBidderId === idx) return;
+    if (amount <= auction.currentBid) return;
+    if (amount > students[idx].budget) return;
+
+    auction.currentBid      = amount;
+    auction.currentBidderId = idx;
+    values[auction.valueId].bidCount++;
+
+    addLog(`💰 <strong>${students[idx].name}</strong> הציע ${fmt(amount)} (מרחוק) על <strong>${values[auction.valueId].name}</strong>`, 'bid');
+    renderAll(); // renderAll calls syncStateToFirebase
+    // Clear the pending bid
+    sessionRef.child('pendingBid').remove();
+}
+
+// Resume session from URL param (teacher refreshed)
+async function resumeTeacherSession(sid) {
+    sessionId  = sid;
+    sessionRef = db.ref('sessions/' + sid);
+
+    const snap = await sessionRef.child('state').once('value');
+    const state = snap.val();
+    if (state) {
+        students = state.students || students;
+        values   = state.values   || values;
+        auction  = state.auction  || null;
+    }
+
+    // Re-attach listeners
+    sessionRef.child('pendingBid').on('value', snap => {
+        const bid = snap.val();
+        if (!bid) return;
+        applyStudentBid(bid);
+    });
+    sessionRef.child('joined').on('value', snap => {
+        const joined = snap.val() || {};
+        document.getElementById('joinedCountNum').textContent = Object.keys(joined).length;
+    });
+
+    document.getElementById('remoteBtn').className = 'hbtn remote-active';
+    document.getElementById('remoteBtn').textContent = '🟢 מפגש פעיל';
+    addLog(`🔄 חיבור מחדש למפגש ${sid}.`, 'info');
+    renderAll();
+}
+
+// ══════════════════════════════════════
+//  STUDENT MODE
+// ══════════════════════════════════════
+let myStudentIdx = null;
+
+function initStudentMode() {
+    const sid = SESSION_PARAM;
+    document.getElementById('sSessionTag').textContent = 'קוד: ' + sid;
+
+    // Check session exists and load student list
+    db.ref('sessions/' + sid + '/state').once('value').then(snap => {
+        const state = snap.val();
+        if (!state) {
+            document.getElementById('sBody').innerHTML = `
+                <div class="s-error-screen">
+                    <h3>הסשן לא נמצא</h3>
+                    <p>בדוק את הקישור עם המורה.</p>
+                </div>`;
+            return;
+        }
+
+        // Populate name dropdown
+        const sel = document.getElementById('studentNameSelect');
+        sel.innerHTML = '<option value="">— בחר שמך —</option>';
+        state.students.forEach((s, i) => {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = s.name;
+            sel.appendChild(opt);
+        });
+
+        // Check localStorage for previously selected name in this session
+        const saved = localStorage.getItem('student_idx_' + sid);
+        if (saved !== null) {
+            sel.value = saved;
+            myStudentIdx = parseInt(saved);
+            showStudentMain(sid);
+        }
+    });
+}
+
+function joinAsStudent() {
+    const sel = document.getElementById('studentNameSelect');
+    const err = document.getElementById('sJoinErr');
+    if (!sel.value) { err.textContent = 'יש לבחור שם.'; return; }
+    myStudentIdx = parseInt(sel.value);
+    localStorage.setItem('student_idx_' + SESSION_PARAM, myStudentIdx);
+    // Mark joined in Firebase
+    db.ref('sessions/' + SESSION_PARAM + '/joined/' + myStudentIdx).set(true);
+    showStudentMain(SESSION_PARAM);
+}
+
+function showStudentMain(sid) {
+    document.getElementById('sJoinScreen').style.display = 'none';
+
+    // Listen to state changes
+    db.ref('sessions/' + sid + '/state').on('value', snap => {
+        const state = snap.val();
+        if (!state) return;
+        renderStudentView(state);
+    });
+}
+
+function renderStudentView(state) {
+    if (myStudentIdx === null) return;
+    const me = state.students[myStudentIdx];
+    if (!me) return;
+
+    // Update header
+    document.getElementById('sHeaderName').textContent = me.name;
+    document.getElementById('sHeaderBudget').textContent = fmt(me.budget);
+    document.getElementById('sHeaderBudget').className = 's-header-budget' + (me.budget < 200 ? ' low' : '');
+    document.getElementById('sHeaderBudgetLabel').textContent = 'יתרה';
+
+    const remoteAuction = state.auction;
+    let html = '';
+
+    if (!remoteAuction) {
+        html = `<div class="s-waiting">
+            <span class="s-waiting-icon">⏳</span>
+            <h3>ממתין לפתיחת המכירה הבאה...</h3>
+            <p>המורה יפתח את הערך הבא בקרוב</p>
+        </div>`;
+    } else {
+        const v = state.values[remoteAuction.valueId];
+        const amLeading = remoteAuction.currentBidderId === myStudentIdx;
+        const bidderName = remoteAuction.currentBidderId !== null
+            ? state.students[remoteAuction.currentBidderId].name : '—';
+
+        html = `
+        <div class="s-live-card">
+            <div class="s-live-badge">מכירה פעילה</div>
+            ${amLeading ? '<div class="s-leading-banner">🏆 אתה מוביל!</div>' : ''}
+            <div class="s-value-name">${v.name}</div>
+            <div class="s-value-desc">${v.desc}</div>
+            <div class="s-bid-stats">
+                <div class="s-stat-box">
+                    <div class="s-stat-label">הצעה גבוהה</div>
+                    <div class="s-stat-value">${remoteAuction.currentBid > 0 ? fmt(remoteAuction.currentBid) : 'פתיחה'}</div>
+                </div>
+                <div class="s-stat-box">
+                    <div class="s-stat-label">מציע</div>
+                    <div class="s-stat-bidder">${bidderName}</div>
+                </div>
+            </div>
+            <div class="s-bid-form">
+                <input type="number" id="sBidInput" class="s-bid-input" placeholder="סכום ₪" min="1"
+                    ${amLeading ? 'disabled' : ''} style="direction:ltr;text-align:right">
+                <button class="btn btn-primary s-bid-submit" onclick="submitStudentBid()"
+                    ${amLeading ? 'disabled' : ''}>
+                    ${amLeading ? '✓ מוביל' : '📤 הצע'}
+                </button>
+            </div>
+            <div id="sBidErr" class="s-bid-err"></div>
+            <div class="s-budget-note">יתרה שלך: ${fmt(me.budget)}</div>
+        </div>`;
+    }
+
+    // Bought items
+    if (me.bought && me.bought.length > 0) {
+        html += `<div class="s-bought-section">
+            <div class="s-bought-title">הערכים שרכשת</div>
+            ${me.bought.map(b => `<div class="s-bought-item"><span>${b.name}</span><span class="s-bought-price">${fmt(b.price)}</span></div>`).join('')}
+        </div>`;
+    }
+
+    document.getElementById('sBody').innerHTML = html;
+}
+
+function submitStudentBid() {
+    const input = document.getElementById('sBidInput');
+    const err   = document.getElementById('sBidErr');
+    const amount = parseInt(input ? input.value : '');
+    if (!err) return;
+    err.textContent = '';
+
+    if (isNaN(amount) || amount <= 0) { err.textContent = 'יש להזין סכום תקין.'; return; }
+
+    db.ref('sessions/' + SESSION_PARAM + '/state').once('value').then(snap => {
+        const state = snap.val();
+        if (!state || !state.auction) { err.textContent = 'אין מכירה פעילה כרגע.'; return; }
+        const { auction: a, students: st } = state;
+        if (a.currentBidderId === myStudentIdx) { err.textContent = 'אתה כבר מוביל!'; return; }
+        if (amount <= a.currentBid) { err.textContent = `ההצעה חייבת להיות מעל ${fmt(a.currentBid)}.`; return; }
+        if (amount > st[myStudentIdx].budget) { err.textContent = `אין לך מספיק כסף (יתרה: ${fmt(st[myStudentIdx].budget)}).`; return; }
+
+        // Submit bid
+        db.ref('sessions/' + SESSION_PARAM + '/pendingBid').set({ studentIdx: myStudentIdx, amount });
+        if (input) input.value = '';
+    });
 }
 
 // ══════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════
-renderAll();
-addLog('🏛️ המכירה הפומבית מוכנה להתחיל!', 'info');
+if (IS_STUDENT && SESSION_PARAM) {
+    document.getElementById('teacherApp').style.display = 'none';
+    document.getElementById('studentApp').style.display = 'flex';
+    initStudentMode();
+} else {
+    renderAll();
+    addLog('🏛️ המכירה הפומבית מוכנה להתחיל!', 'info');
+    if (SESSION_PARAM && !IS_STUDENT) {
+        resumeTeacherSession(SESSION_PARAM);
+    }
+}
 </script>
 </body>
 </html>
