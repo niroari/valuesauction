@@ -1,20 +1,19 @@
 # מכירה פומבית של ערכים — תיעוד פרויקט
 
 ## מה זה?
-דף HTML חד-פעמי לפעילות כיתתית: מכירה פומבית של ערכים (חברות, עושר, בריאות וכו').
+פעילות כיתתית: מכירה פומבית של ערכים (חברות, עושר, בריאות וכו').
 כל תלמיד מתחיל עם 1,000 ₪ וירטואליים ומתמודד על ערכים שחשובים לו.
+תומך גם במשחק פרונטלי (מורה מנהל הכל) וגם בלמידה מרחוק (תלמידים מציעים מהטלפון).
 
 ## קישורים
 - **GitHub:** https://github.com/niroari/valuesauction
-- **דף חי (GitHub Pages):** https://niroari.github.io/valuesauction
-- **קובץ מקומי:** `/Users/nirozari/index.html`
-
-## איך להפעיל
-```bash
-open /Users/nirozari/index.html
-```
+- **Vercel (ראשי):** https://valuesauction.vercel.app
+- **Firebase Console:** https://console.firebase.google.com/project/values-auction-ed09c
+- **Firebase Realtime DB:** https://values-auction-ed09c-default-rtdb.europe-west1.firebasedatabase.app
 
 ## תכונות קיימות
+
+### מצב פרונטלי (ברירת מחדל)
 - רשימת 33 תלמידים עם תקציב 1,000 ₪ כל אחד
 - 15 ערכים עם תיאורים
 - **מכירה פומבית:** בחירת תלמיד + הצעת מחיר → "מכור לגבוה ביותר"
@@ -24,8 +23,20 @@ open /Users/nirozari/index.html
 - **יומן פעילות:** לוג בזמן אמת של כל הצעה ומכירה
 - **הגנות:** חריגה מתקציב, הגשה נגד עצמך, מכירה כפולה
 
+### מצב למידה מרחוק (Firebase)
+- מורה פותח מפגש → מקבל קוד סשן + QR code + קישור לשיתוף
+- תלמידים פותחים קישור, בוחרים שם, ומציעים הצעות מהטלפון בזמן אמת
+- מורה רואה את ההצעות מתעדכנות חיות ומנהל את הסגירה
+- מצב היברידי נתמך: חלק בכיתה, חלק מרחוק
+- מורה יכול לטעון מחדש את הדף מבלי לאבד את הסשן (URL מתעדכן)
+
+**URL scheme:**
+- מורה: `https://valuesauction.vercel.app/`
+- מורה עם סשן פעיל: `?session=ABC123`
+- תלמיד: `?session=ABC123&role=student`
+
 ## ארכיטקטורה
-קובץ HTML יחיד (index.html) — ללא תלויות חיצוניות, ללא שמירת מצב.
+קובץ HTML יחיד (index.html) — Firebase Realtime Database לסנכרון מרחוק.
 
 **State מרכזי:**
 ```js
@@ -35,6 +46,31 @@ let auction  = { valueId, currentBid, currentBidderId } | null
 ```
 
 **סטטוסים של ערך:** `pending → active → sold`
+
+**Firebase structure:**
+```
+sessions/{sessionId}/
+  active: true|false
+  state: { students, values, auction }
+  pendingBid: { studentIdx, amount }   ← תלמיד שולח, מורה מעבד
+  joined: { [studentIdx]: true }       ← ספירת נוכחות
+```
+
+**הערה טכנית:** Firebase מוחק ערכי null — `currentBidderId` מאוחסן כ-`-1` כשאין מציע.
+
+## Firebase Security Rules
+```json
+{
+  "rules": {
+    "sessions": {
+      "$sessionId": {
+        ".read": true,
+        ".write": true
+      }
+    }
+  }
+}
+```
 
 ## רשימת תלמידים (33)
 אלבז אלכס, בן חמו אביתר, ג'ונסטון כרמל, גיא אלום נויה, דוד נתאי, דוד פור נטע,
@@ -67,3 +103,4 @@ let auction  = { valueId, currentBid, currentBidderId } | null
 - [ ] מצב "תצוגה גדולה" — לקרן על מסך לכיתה
 - [ ] אפשרות לאפס את כל המצב מחדש (כפתור reset)
 - [ ] שמירת מצב ב-localStorage (לפעילות רב-שלבית)
+- [ ] Firebase Security Rules מחמירות יותר (כרגע open read/write)
